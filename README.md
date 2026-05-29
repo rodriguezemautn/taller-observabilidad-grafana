@@ -251,11 +251,17 @@ Todas las notas están en el repositorio, en `notas-academicas/`:
 ```
 taller-observabilidad-grafana/
 ├── docker/                          ← 🐳 Infraestructura (todo con 1 comando)
-│   ├── docker-compose.yml           ← 10 servicios
-│   ├── Dockerfile                   ← Build multistage
-│   ├── otel-collector/config.yml    ← Pipeline de telemetría
+│   ├── .env.example                 ← Variables de entorno configurables
+│   ├── docker-compose.yml           ← 10 servicios (con limits, healthchecks, logging)
+│   ├── Dockerfile                   ← Build multistage (3 stages, ~350MB final)
+│   ├── mimir.yml                    ← Config de Mimir (single-node)
+│   ├── mimir-overrides.yaml         ← Overrides de Mimir
+│   ├── tempo.yml                    ← Config de Tempo
+│   ├── otel-collector/
+│   │   └── config.yml              ← Pipeline OTLP + scraper Prometheus
 │   └── grafana/
-│       ├── datasources.yml          ← Provisioning automático
+│       ├── datasources.yml          ← Provisioning automático (con uids explícitos)
+│       ├── dashboards.yml           ← Provider con allowUiUpdates: true
 │       └── dashboards/*.json        ← 5 dashboards pre-configurados
 ├── packages/
 │   ├── core/                        ← 🧠 Dominio puro (sin dependencias)
@@ -274,6 +280,7 @@ taller-observabilidad-grafana/
 ├── docs/
 │   ├── presentacion.md              ← 📽️ Slides MARP para la clase
 │   ├── architecture.md              ← Decisiones arquitectónicas
+│   ├── docker-best-practices.md    ← 🐳 Guía de optimización y buenas prácticas Docker
 │   ├── lecciones-aprendidas.md      ← 🐛 9 errores del pipeline y cómo se solucionaron
 │   ├── conectar-nuevo-datasource.md ← 🔌 Guía didáctica: cómo agregar un datasource paso a paso
 │   ├── demo-clase-datasource-ui.md  ← 🎓 Script de clase: conectar PostgreSQL desde la UI
@@ -339,6 +346,7 @@ Podés editarlos desde la UI gracias a `allowUiUpdates: true` en la configuraci�
 
 | Archivo | Contenido |
 |---------|-----------|
+| [`docs/docker-best-practices.md`](docs/docker-best-practices.md) | Guía de optimización Docker: .env, resource limits, logging, healthchecks, seguridad, Dockerfile multistage |
 | [`docs/lecciones-aprendidas.md`](docs/lecciones-aprendidas.md) | Los 9 errores que encontramos armando el pipeline OTel → Mimir/Loki/Tempo, con causa raíz y solución |
 | [`docs/conectar-nuevo-datasource.md`](docs/conectar-nuevo-datasource.md) | Guía didáctica de 7 pasos para conectar un nuevo datasource, desde el exporter hasta el panel en Grafana |
 | [`docs/demo-clase-datasource-ui.md`](docs/demo-clase-datasource-ui.md) | Script para la demo en clase: conectar PostgreSQL desde la UI, crear dashboard y usar el query builder |

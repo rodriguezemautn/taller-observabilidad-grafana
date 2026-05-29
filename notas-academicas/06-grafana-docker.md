@@ -4,102 +4,160 @@
 
 Este documento cubre el despliegue de **Grafana y su ecosistema LGTM** en Docker Compose, y cómo monitorear contenedores (métricas, logs, trazas) desde un entorno 100% local. Es el enfoque utilizado en el taller de observabilidad.
 
-## Arquitectura del Stack LGTM en Docker
+A diferencia de otros stacks de monitoreo (Prometheus + Grafana básico), este stack está diseñado para ser **didáctico**: muestra los 3 pilares de la observabilidad (métricas, logs, trazas) integrados en un solo dashboard.
+
+---
+
+## Arquitectura del Stack
 
 ```
-                  ┌───────────────────┐
-                  │   Aplicación App   │
-                  │ (Fastify + React)  │
-                  └────────┬──────────┘
-                           │ OTLP (OpenTelemetry)
+                    ┌───────────────────┐
+                    │   Aplicación App   │
+                    │ (Fastify + React)  │
+                    └────────┬──────────┘
+                             │ OTLP HTTP (metrics + traces)
+                             │ Pino → Loki (logs, directo)
+                             ▼
+                    ┌───────────────────┐
+                    │  OpenTelemetry     │
+                    │    Collector       │
+                    │  scrapers:         │
+                    │  postgres-exporter │
+                    │  cadvisor          │
+                    │  node-exporter     │
+                    └──┬──────┬──────┬──┘
+                       │      │      │
+                 ┌─────┘      │      └──────┐
+                 ▼            ▼             ▼
+           ┌──────────┐ ┌──────────┐ ┌──────────┐
+           │   Loki   │ │  Tempo   │ │  Mimir   │
+           │  (logs)  │ │ (trazas) │ │(métricas)│
+           │  :3100   │ │ :3200    │ │ :9009    │
+           └────┬─────┘ └────┬─────┘ └────┬─────┘
+                │            │            │
+                └──────────┬─┴────────────┘
                            ▼
-                  ┌───────────────────┐
-                  │  OpenTelemetry     │
-                  │    Collector       │
-                  └──┬──────┬──────┬──┘
-                     │      │      │
-               ┌─────┘      │      └──────┐
-               ▼            ▼             ▼
-         ┌──────────┐ ┌──────────┐ ┌──────────┐
-         │   Loki   │ │  Tempo   │ │  Mimir   │
-         │  (logs)  │ │ (trazas) │ │(métricas)│
-         │ :3100    │ │ :3200    │ │ :9009    │
-         └────┬─────┘ └────┬─────┘ └────┬─────┘
-              │            │            │
-              └──────────┬─┴────────────┘
-                         ▼
-                  ┌──────────────┐
-                  │   Grafana    │
-                  │   :3000      │
-                  └──────────────┘
+                    ┌──────────────┐
+                    │   Grafana    │
+                    │   :3000      │
+                    │   Loki       │
+                    │   Tempo      │
+                    │   Mimir      │
+                    └──────────────┘
 ```
+
+---
 
 ## Componentes del Stack
 
-| Componente | Imagen Docker | Puerto | Función |
-|-----------|--------------|--------|---------|
+| Componente | Imagen Docker | Puerto(s) | Función |
+|-----------|--------------|-----------|---------|
 | **Grafana** | `grafana/grafana:latest` | 3000 | Visualización y dashboards |
 | **Loki** | `grafana/loki:latest` | 3100 | Almacenamiento y consulta de logs |
-| **Tempo** | `grafana/tempo:latest` | 3200 (3200 UI) / 4317 (gRPC) | Trazado distribuido |
-| **Mimir** | `grafana/mimir:latest` | 9009 | Métricas de series temporales |
-| **OTel Collector** | `otel/opentelemetry-collector-contrib:latest` | 4317 (gRPC) / 4318 (HTTP) | Pipeline de telemetría |
-| **PostgreSQL** | `postgres:16-alpine` | 5432 | Base de datos de la app |
-| **Node App** | Build local | 3001 | Backend + Frontend |
+| **Tempo** | `grafana/tempo:latest` | 3200 | Almacenamiento de trazas (tracing distribuido) |
+| **Mimir** | `grafana/mimir:latest` | 9009 | Métricas de series temporales (compatible Prometheus) |
+| **OTel Collector** | `otel/opentelemetry-collector-contrib:latest` | 4317 (gRPC), 4318 (HTTP), 13133 (health) | Pipeline de telemetría + scraper Prometheus |
+| **PostgreSQL** | `postgres:16-alpine` | 5432 | Base de datos de la aplicación |
+| **App** | Build local (multistage) | 3001 | Backend (Fastify) + Frontend (React) |
+| **postgres-exporter** | `quay.io/prometheuscommunity/postgres-exporter` | 9187 | Exporta métricas de PostgreSQL a Prometheus |
+| **cAdvisor** | `gcr.io/cadvisor/cadvisor` | 8080 | Exporta métricas de contenedores |
+| **node-exporter** | `prom/node-exporter` | 9100 | Exporta métricas del host (CPU, RAM, disco, red) |
 
-## docker-compose.yml Esencial
+**Total: 10 servicios.**
+
+---
+
+## docker-compose.yml (versión actual)
+
+El archivo completo está en `docker/docker-compose.yml`. Acá los patrones clave:
+
+### Variables de Entorno
 
 ```yaml
-version: "3.8"
-services:
-  app:
-    build: .
-    ports: ["3001:3001"]
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/taller
-    depends_on: [postgres, otel-collector]
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: taller
-      POSTGRES_PASSWORD: postgres
-    ports: ["5432:5432"]
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    volumes:
-      - ./otel-collector/config.yml:/etc/otel/config.yml
-    command: ["--config", "/etc/otel/config.yml"]
-    ports: ["4317:4317", "4318:4318"]
-    depends_on: [loki, tempo, mimir]
-
-  loki:
-    image: grafana/loki:latest
-    ports: ["3100:3100"]
-
-  tempo:
-    image: grafana/tempo:latest
-    ports: ["3200:3200", "4317:4317"]
-
-  mimir:
-    image: grafana/mimir:latest
-    ports: ["9009:9009"]
-
-  grafana:
-    image: grafana/grafana:latest
-    ports: ["3000:3000"]
-    volumes:
-      - ./grafana/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
-    depends_on: [loki, tempo, mimir]
+# docker/.env
+POSTGRES_DB=taller
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+GF_SECURITY_ADMIN_USER=admin
+GF_SECURITY_ADMIN_PASSWORD=admin
 ```
+
+Docker Compose carga `.env` automáticamente. Se referencian con sintaxis de shell:
+
+```yaml
+environment:
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+```
+
+> **¿Por qué `${VAR:-default}`?** Así el compose funciona incluso si no existe el `.env`. El default es el valor del taller.
+
+### Ancla de Logging
+
+```yaml
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+Se aplica a cada servicio con `logging: *default-logging`. Sin esto, Docker acumula logs sin límite.
+
+### Límites de Recursos
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: "0.5"
+      memory: "256M"
+```
+
+Sin límites, un contenedor puede consumir toda la RAM del host. Con límites, el stack total usa ~2.5 GB máximos.
+
+### Healthchecks
+
+```yaml
+healthcheck:
+  test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 15s
+```
+
+Permiten que `depends_on: condition: service_healthy` espere a que el servicio esté realmente listo, no solo el container running.
+
+### Dependencias
+
+```yaml
+depends_on:
+  postgres:
+    condition: service_healthy
+  otel-collector:
+    condition: service_healthy
+```
+
+### Versiones de imágenes
+
+```yaml
+image: grafana/loki:${IMAGE_TAG_LOKI:-latest}
+```
+
+Por defecto `latest`. Para fijar versiones (recomendado para producción del taller), descomentar las versiones en `.env`:
+
+```bash
+IMAGE_TAG_LOKI=3.4.2
+IMAGE_TAG_GRAFANA=11.6.0
+```
+
+---
 
 ## Monitoreo de Contenedores
 
-### Métricas de Contenedores (cAdvisor + Mimir)
+### Métricas de Contenedores (cAdvisor → Mimir)
 
-Para monitorear el consumo de recursos de los contenedores (CPU, RAM, red), se agrega **cAdvisor** al stack:
+cAdvisor expone métricas en `/metrics` (formato Prometheus):
 
 ```yaml
 cadvisor:
@@ -110,163 +168,245 @@ cadvisor:
     - /var/run:/var/run:ro
     - /sys:/sys:ro
     - /var/lib/docker/:/var/lib/docker:ro
-    - /dev/disk/:/dev/disk:ro
+  privileged: true
 ```
 
-cAdvisor expone métricas en `/metrics` en formato Prometheus. El OTel Collector o un scraper de Prometheus las recolecta y las envía a Mimir.
+El OTel Collector scrapea `cadvisor:8080/metrics` cada 15s y envía a Mimir.
 
 **Dashboard de contenedores:**
-- **CPU**: % de uso por contenedor
-- **Memoria**: RAM usada vs límite
-- **Red**: bytes enviados/recibidos por interfaz
-- **Disk I/O**: operaciones de lectura/escritura
+- **CPU**: `rate(container_cpu_usage_seconds_total{name!=""}[$__rate_interval])` por container
+- **Memoria**: `container_memory_usage_bytes{name!=""}` por container
+- **Red**: `rate(container_network_receive_bytes_total{name!=""}[$__rate_interval])`
+- **Contenedores activos**: `count(container_last_seen{name!=""})`
 
-### Logs de Contenedores (Loki + Promtail/Alloy)
-
-Para recolectar logs de todos los contenedores, se usa **Promtail** (o **Grafana Alloy**, el reemplazo moderno):
+### Métricas del Host (node-exporter → Mimir)
 
 ```yaml
-promtail:
-  image: grafana/promtail:latest
+node-exporter:
+  image: prom/node-exporter:latest
   volumes:
-    - /var/log:/var/log:ro
-    - /var/lib/docker/containers:/var/lib/docker/containers:ro
-  command: -config.file=/etc/promtail/config.yml
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/rootfs:ro
+  command:
+    - "--path.procfs=/host/proc"
+    - "--path.sysfs=/host/sys"
+    - "--path.rootfs=/rootfs"
 ```
 
-Promtail etiqueta cada log con metadatos del contenedor: `container_name`, `service_name`, `image`, etc. Esto permite filtrar logs por servicio en Grafana.
+**Dashboard de host:**
+- **CPU**: `100 - avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[$__rate_interval]) * 100)`
+- **Memoria**: `node_memory_MemTotal_bytes - node_memory_MemFree_bytes`
+- **Disco**: `node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes`
+- **Load**: `node_load15`
+- **Uptime**: `node_time_seconds - node_boot_time_seconds`
 
-### Trazas entre Contenedores (Tempo + OTel)
+### Métricas de PostgreSQL (postgres-exporter → Mimir)
 
-Cada servicio (frontend, backend) exporta trazas vía OTLP al OTel Collector. Tempo recibe las trazas del collector y las almacena indexadas por `service.name` y `span.name`.
+```yaml
+postgres-exporter:
+  image: quay.io/prometheuscommunity/postgres-exporter:latest
+  environment:
+    DATA_SOURCE_NAME: "postgresql://postgres:postgres@postgres:5432/taller?sslmode=disable"
+```
 
-**Flujo de una traza:**
+**Dashboard PostgreSQL:**
+- **Conexiones activas**: `avg(pg_stat_activity_count) by (datname, state)`
+- **Transacciones/s**: `rate(pg_stat_database_xact_commit_total[$__rate_interval])`
+- **Cache hit ratio**: `rate(blks_hit_total) / (rate(blks_hit_total) + rate(blks_read_total))`
+- **Operaciones r/w**: `rate(pg_stat_database_tup_fetched_total[$__rate_interval])`
+- **Deadlocks**: `rate(pg_stat_database_deadlocks_total[$__rate_interval])`
+
+> **Atención**: Las métricas de postgres-exporter usan sufijo `_total` en los counters. Ej: `pg_stat_database_xact_commit_total` (no `pg_stat_database_xact_commit`). Este sufijo lo agrega el exporter automáticamente.
+
+---
+
+## Logs de Contenedores
+
+La aplicación envía logs directamente a Loki usando `pino-loki`:
+
+```typescript
+// packages/infrastructure/src/observability/logger.ts
+const transport = pino.transport({
+  targets: [
+    { target: 'pino-pretty', options: { colorize: true } },
+    {
+      target: 'pino-loki',
+      options: {
+        host: 'http://loki:3100',
+        labels: { service_name: 'taller-backend' },
+      },
+    },
+  ],
+});
+```
+
+No se necesita Promtail/Grafana Alloy porque los logs van directo de la app a la API de Loki.
+
+**Filtros en Grafana (LogQL):**
+```logql
+{service_name="taller-backend"}                           // Todos
+{service_name="taller-backend"} |= "post.created"         // Por evento
+{service_name="taller-backend"} |= "error"                 // Solo errores
+{service_name="taller-backend"} | json | level > 30       // Warn/Error por nivel
+```
+
+---
+
+## Trazas entre Contenedores (Tempo + OTel)
+
+La app exporta trazas vía OTLP HTTP al OTel Collector, que las reenvía a Tempo vía gRPC:
 
 ```
-POST /api/posts (Frontend)
-  └─ HTTP POST → backend:3001/api/posts (Span HTTP)
-       └─ CreatePostUseCase.execute() (Span de negocio)
-            └─ Prisma: post.create() (Span de DB)
+HTTP Request → OTel SDK → OTLP/HTTP → OTel Collector → OTLP/gRPC → Tempo
 ```
+
+**Flujo de una traza de creación de post:**
+
+```
+POST /api/posts (span HTTP)
+  └─ create-post (span manual en el caso de uso)
+       └─ prisma:post.create (span de base de datos)
+```
+
+**TraceQL (consulta de trazas):**
+```traceql
+{resource.service.name="taller-backend"}
+{resource.service.name="taller-backend"} | span.duration > 100ms
+{resource.service.name="taller-backend"} && name="create-post"
+```
+
+> **Nota**: Las trazas se consultan con `resource.service.name` (scope del resource), no `service.name` (scope del span). Usar `service.name` da error "unknown identifier".
+
+---
 
 ## Provisioning de Grafana
 
-Grafana permite configurar datasources y dashboards **sin intervención manual** via archivos YAML/JSON montados como volúmenes.
+Grafana arranca con datasources y dashboards ya configurados:
 
-### Datasources (`/etc/grafana/provisioning/datasources/datasources.yml`)
+### Datasources (`docker/grafana/datasources.yml`)
 
 ```yaml
 apiVersion: 1
 datasources:
   - name: Loki
+    uid: loki
     type: loki
     url: http://loki:3100
-    access: proxy
 
   - name: Tempo
+    uid: tempo
     type: tempo
     url: http://tempo:3200
-    access: proxy
 
   - name: Mimir
     type: prometheus
+    uid: mimir
     url: http://mimir:9009/prometheus
-    access: proxy
+    jsonData:
+      httpHeaderName1: "X-Scope-OrgID"
+    secureJsonData:
+      httpHeaderValue1: "anonymous"
 ```
 
-### Dashboards (`/etc/grafana/provisioning/dashboards/dashboards.yml`)
+> **Cada datasource tiene `uid` explícito**. Sin eso, Grafana genera uno aleatorio y los dashboards provisionados se rompen (no encuentran el datasource).
+
+> **Mimir requiere `X-Scope-OrgID: anonymous`** porque es multi-tenant. Sin ese header, rechaza todas las consultas.
+
+### Dashboards (`docker/grafana/dashboards.yml`)
 
 ```yaml
 apiVersion: 1
 providers:
   - name: "default"
-    folder: "Taller"
     type: file
     options:
       path: /etc/grafana/provisioning/dashboards
+    allowUiUpdates: true
 ```
 
-## Tipos de Datasources Clave
+**`allowUiUpdates: true`** permite que los alumnos editen dashboards desde la UI sin perder cambios al reiniciar. En producción esto iría en `false`.
 
-| Datasource | Señal | Query de ejemplo |
-|-----------|-------|------------------|
-| **Loki** | Logs | `{service_name="backend"} \|= "post.created"` |
-| **Tempo** | Trazas | `{service.name="backend"}` — busca trazas del backend |
-| **Mimir** | Métricas | `rate(http_requests_total[5m])` — tasa de requests |
+### Dashboards incluidos (5)
 
-## Frameworks de Métricas
+| Archivo | Dashboard | Señal |
+|---------|-----------|-------|
+| `red-dashboard.json` | RED - Backend | Métricas (PromQL) |
+| `logs-dashboard.json` | Logs de la Aplicación | Logs (LogQL) |
+| `traces-dashboard.json` | Trazas del Backend | Trazas (TraceQL) |
+| `postgres-dashboard.json` | Base de Datos - PostgreSQL | Métricas (PromQL) |
+| `infra-dashboard.json` | Infraestructura - Host y Contenedores | Métricas (PromQL) |
 
-### RED (para servicios)
-| Métrica | Consulta Mimir/PromQL |
-|---------|----------------------|
-| Rate | `rate(http_requests_total[5m])` |
-| Errors | `rate(http_requests_total{status=~"5.."}[5m])` |
-| Duration | `histogram_quantile(0.95, rate(http_duration_seconds_bucket[5m]))` |
+---
 
-### USE (para infraestructura/recursos)
-| Métrica | Consulta |
-|---------|----------|
-| Utilization | `container_cpu_usage_seconds_total` / `container_spec_cpu_quota` |
-| Saturation | `container_memory_working_set_bytes` / `container_spec_memory_limit_bytes` |
-| Errors | `container_last_seen` (faltante indica caída) |
+## Mejores Prácticas Aplicadas
 
-## Configuración OpenTelemetry Collector
+### 1. Variables de entorno externas
 
-```yaml
-# config.yml del OTel Collector
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
+No hardcodear config en el YAML. Usar `.env` + sintaxis `${VAR:-default}`.
 
-processors:
-  batch:
-    timeout: 1s
-    send_batch_size: 1024
+### 2. Límites de recursos por servicio
 
-exporters:
-  loki:
-    endpoint: http://loki:3100/loki/api/v1/push
-  prometheus:
-    endpoint: http://mimir:9009/api/v1/push
-  otlp/tempo:
-    endpoint: tempo:4317
-    tls:
-      insecure: true
+Cada servicio tiene `deploy.resources.limits` para CPU y RAM. Evita que un contenedor se coma toda la RAM del alumno.
 
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp/tempo]
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus]
-    logs:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [loki]
-```
+### 3. Healthchecks en todos los servicios
 
-## Mejores Prácticas
+`depends_on: condition: service_healthy` evita race conditions al arrancar.
 
-1. **Usar redes de Docker**: Todos los servicios deben estar en la misma red para comunicarse por nombre de servicio
-2. **Healthchecks**: Agregar healthchecks a cada servicio para que Docker sepa cuándo están listos
-3. **Versiones fijas**: Pinear versiones de imágenes (no usar `latest`) para evitar roturas por cambios upstream
-4. **Volúmenes nombrados**: Usar volúmenes para datos persistentes (PostgreSQL, Loki, Mimir)
-5. **Límites de recursos**: Agregar `deploy.resources.limits` a cada servicio para evitar que un contenedor consuma toda la RAM del alumno
-6. **Logs estructurados**: La aplicación debe emitir logs en JSON para que Loki los pueda indexar correctamente
+### 4. Logging con rotación
+
+`max-size: 10m` + `max-file: 3` evita que logs llenen el disco. Ancla YAML `x-logging` para no repetir.
+
+### 5. Volúmenes read-only
+
+Configuraciones montadas como `:ro` para seguridad. Solo los volúmenes de datos son RW.
+
+### 6. Versiones fijas (recomendado)
+
+Aunque el default es `latest`, el `.env.example` documenta las versiones verificadas. Copiar al `.env` para entornos estables.
+
+### 7. Dockerfile multistage
+
+3 stages: deps (cache npm), build (compilar), run (solo dist). Imagen final ~350 MB (vs ~1.2 GB sin multistage).
+
+### 8. Red bridge personalizada
+
+Todos los servicios en `taller-net` para comunicación por nombre de servicio.
+
+### 9. Capacidades mínimas (excepto cadvisor)
+
+cAdvisor es el único que requiere `privileged: true` (documentado con link al issue de GitHub).
+
+### 10. No exponer puertos innecesarios
+
+Cada servicio expone solo los puertos que necesita el taller.
+
+---
+
+## Comparación: Antes vs Después
+
+| Aspecto | Antes | Después |
+|---------|-------|---------|
+| Configuración | Hardcodeada en YAML | `.env` + defaults |
+| Límites de RAM | Ninguno | 64M-512M por servicio |
+| Límites de CPU | Ninguno | 0.1-0.5 cores por servicio |
+| Healthchecks | Solo PostgreSQL | Todos los servicios |
+| Logging | Default (sin límite) | Rotación 10m × 3 archivos |
+| Seguridad | Bind mounts RW | `:ro` en configuraciones |
+| OTel health check | No | Sí (extensión health_check) |
+| Dependencias | `service_started` | `service_healthy` |
+| Versiones | `latest` fijo | Variables con default latest |
+| Documentación | Solo README | `.env.example` + `docs/docker-best-practices.md` |
+
+---
 
 ## Referencias
 
 - Grafana Labs, "Grafana Documentation" — https://grafana.com/docs/
 - OpenTelemetry, "Documentación oficial" — https://opentelemetry.io/docs/
-- Grafana, "Loki documentation" — https://grafana.com/docs/loki/
-- Grafana, "Tempo documentation" — https://grafana.com/docs/tempo/
-- Grafana, "Mimir documentation" — https://grafana.com/docs/mimir/
+- Docker, "Compose file reference" — https://docs.docker.com/compose/compose-file/
+- Docker, "Best practices for writing Dockerfiles" — https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 - cAdvisor, "GitHub repository" — https://github.com/google/cadvisor
+- Postgres Exporter, "GitHub repository" — https://github.com/prometheus-community/postgres_exporter
+- Node Exporter, "GitHub repository" — https://github.com/prometheus/node_exporter
+- OTel Collector, "Health Check Extension" — https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension

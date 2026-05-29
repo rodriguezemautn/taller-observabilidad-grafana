@@ -3,6 +3,10 @@
 server:
   http_listen_port: 9009
 
+# Runtime overrides for per-tenant limits
+runtime_config:
+  file: /etc/mimir-overrides.yaml
+
 distributor:
   ring:
     kvstore:
@@ -36,3 +40,7 @@ store_gateway:
     kvstore:
       store: inmemory
     replication_factor: 1
+
+# Increase label limit for cAdvisor metrics which have ~31 labels
+limits:
+  max_label_names_per_series: 50

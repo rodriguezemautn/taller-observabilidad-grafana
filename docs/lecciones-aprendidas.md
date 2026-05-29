@@ -483,3 +483,111 @@ compatibilidad con la versión de Grafana en uso.
 | 7 | Dashboard sin datasource | "No data" en Grafana | Setear `datasource: {type, uid}` en cada panel |
 | 8 | TraceQL sin scope resource | Trazas no aparecen | `{resource.service.name="..."}` |
 | 9 | Dashboard sin metadata | No se muestra | Agregar `uid`, `version`, `schemaVersion` |
+| 10 | Scratch images sin healthcheck | Container unhealthy | Imágenes minimalistas no tienen shell/wget — cambiar a `service_started` |
+| 11 | cAdvisor metrics exceden labels | OTel Collector no puede exportar | Aumentar `max_label_names_per_series: 50` en Mimir |
+
+---
+
+## 10. Imágenes scratch/distroless no permiten healthchecks
+
+### Error: Containers de Loki, Tempo, Mimir y OTel Collector aparecen como "unhealthy"
+
+Los healthchecks con `wget --spider http://localhost:PUERTO/ready` fallan siempre:
+
+```
+$ docker ps
+taller-loki    unhealthy
+taller-mimir   unhealthy
+taller-tempo   unhealthy
+```
+
+Sin embargo, los servicios **funcionan correctamente** — responden consultas, aceptan datos, etc.
+
+### Causa raíz
+
+Las imágenes oficiales de Loki, Tempo, Mimir y OTel Collector están basadas en:
+
+| Imagen | Base | Shell | wget | curl |
+|--------|------|:----:|:----:|:----:|
+| `grafana/loki` | **scratch** | ❌ | ❌ | ❌ |
+| `grafana/tempo` | **scratch** | ❌ | ❌ | ❌ |
+| `grafana/mimir` | **scratch** | ❌ | ❌ | ❌ |
+| `otel/opentelemetry-collector-contrib` | **distroless** | ❌ | ❌ | ❌ |
+
+> **scratch**: Imagen Docker vacía. Solo contiene el binario compilado estáticamente.
+> **distroless**: Solo contiene el runtime mínimo (glibc, CA certs), sin shell ni package manager.
+
+El healthcheck `["CMD", "wget", "--spider", "..."]` falla porque `wget` simplemente **no existe** en el sistema de archivos del contenedor.
+
+### Solución
+
+No usar healthchecks en estos servicios. En su lugar, usar `depends_on: condition: service_started`:
+
+```yaml
+# En servicios sin healthcheck:
+depends_on:
+  loki:
+    condition: service_started    # espera a que el contenedor corra, no a que el servicio esté listo
+  tempo:
+    condition: service_started
+  mimir:
+    condition: service_started
+```
+
+### Por qué funciona (para este taller)
+
+Loki, Tempo, Mimir y OTel Collector son **binarios Go estáticos**. Su tiempo de arranque es de ~1 segundo — para cuando Docker dice "container started", el proceso ya está escuchando. La diferencia entre `started` y `healthy` es insignificante para estos servicios.
+
+**Para producción**, donde necesitás garantías reales de disponibilidad, considerá:
+1. **Imágenes custom**: Agregar `curl` o `wget` compilado estáticamente a la imagen
+2. **Orquestador**: Kubernetes con `startupProbe` que verifica endpoints HTTP externamente
+3. **Healthcheck externo**: Un proceso separado (sidecar) que verifica los endpoints
+
+---
+
+## 11. cAdvisor metrics exceden el límite de labels de Mimir
+
+### Error: OTel Collector no puede exportar métricas de cAdvisor
+
+El OTel Collector logea errores 400 al intentar enviar métricas a Mimir:
+
+```
+failed to send WriteRequest to remote endpoint
+status_code: 400, "400 Bad Request"
+actual: 31, limit: 30
+series: 'container_fs_reads_total{container_label_com_docker_compose_...}'
+err-mimir-max-label-names-per-series
+```
+
+### Causa raíz
+
+cAdvisor agrega muchas labels de Docker a cada métrica: config hash, container number, one-cron, deployment, project, service, slot, working-dir, etc. Total: **31 labels por serie**. Mimir tiene un límite por defecto de **30** labels por serie.
+
+Error: `received a series whose number of labels exceeds the limit (actual: 31, limit: 30)`
+
+### Solución
+
+Aumentar el límite en Mimir a través de la configuración:
+
+```yaml
+# docker/mimir.yml
+limits:
+  max_label_names_per_series: 50
+```
+
+Y opcionalmente en el runtime overrides:
+
+```yaml
+# docker/mimir-overrides.yaml
+overrides:
+  anonymous:
+    max_label_names_per_series: 50
+```
+
+### Alternativa no aplicada
+
+También se podría **dropear labels** en el OTel Collector usando el processor `attributes` o `transform`, pero aumentando el límite es más simple y no perdemos información de cAdvisor.
+
+### Por qué funciona
+
+Mimir permite configurar límites por tenant. El límite default de 30 labels cubre el caso general de Prometheus (node_exporter tiene ~15 labels, postgres_exporter tiene ~8). cAdvisor es especial porque incluye metadata de Docker en cada serie.

@@ -1,25 +1,129 @@
+# ═══════════════════════════════════════════════════════════
+#  Taller de Observabilidad — Docker Compose
+#  Stack: LGTM + OTel Collector + Exporters + App
+# ═══════════════════════════════════════════════════════════
+#
+#  Uso:
+#    docker compose up -d                    # levantar todo
+#    docker compose up -d --force-recreate   # recrear containers
+#    docker compose logs -f                  # seguir logs en tiempo real
+#    docker compose down -v                  # bajar todo + borrar volúmenes
+#    docker compose ps                       # ver estado
+#
+#  Variables de entorno: copiar .env.example → .env
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "${LOG_MAX_SIZE:-10m}"
+    max-file: "${LOG_MAX_FILE:-3}"
+
+x-healthcheck-postgres: &hc-postgres
+  test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+  interval: 5s
+  timeout: 5s
+  retries: 5
+
 services:
+
+  # ─── PostgreSQL ──────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: postgres:${IMAGE_TAG_POSTGRES:-16-alpine}
+    container_name: taller-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: taller
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-taller}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${HOST_PORT_POSTGRES:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    healthcheck: *hc-postgres
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_POSTGRES:-0.5}"
+          memory: "${LIMIT_MEM_POSTGRES:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_POSTGRES:-0.25}"
+          memory: "${LIMIT_MEM_POSTGRES:-128M}"
     networks:
       - taller-net
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+  # ─── Loki ─────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:${IMAGE_TAG_LOKI:-latest}
+    container_name: taller-loki
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT_LOKI:-3100}:3100"
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_LOKI:-0.3}"
+          memory: "${LIMIT_MEM_LOKI:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_LOKI:-0.1}"
+          memory: "${LIMIT_MEM_LOKI:-128M}"
+    networks:
+      - taller-net
+
+  # ─── Tempo ────────────────────────────────────────────────
+  tempo:
+    image: grafana/tempo:${IMAGE_TAG_TEMPO:-latest}
+    container_name: taller-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yml"]
     volumes:
-      - ./otel-collector/config.yml:/etc/otel/config.yml
+      - ./tempo.yml:/etc/tempo.yml:ro
+    ports:
+      - "${HOST_PORT_TEMPO:-3200}:3200"
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_TEMPO:-0.3}"
+          memory: "${LIMIT_MEM_TEMPO:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_TEMPO:-0.1}"
+          memory: "${LIMIT_MEM_TEMPO:-128M}"
+    networks:
+      - taller-net
+
+  # ─── Mimir ────────────────────────────────────────────────
+  mimir:
+    image: grafana/mimir:${IMAGE_TAG_MIMIR:-latest}
+    container_name: taller-mimir
+    restart: unless-stopped
+    command: ["-config.file=/etc/mimir.yml"]
+    volumes:
+      - ./mimir.yml:/etc/mimir.yml:ro
+      - ./mimir-overrides.yaml:/etc/mimir-overrides.yaml:ro
+      - mimir-data:/data
+    ports:
+      - "${HOST_PORT_MIMIR:-9009}:9009"
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_MIMIR:-0.5}"
+          memory: "${LIMIT_MEM_MIMIR:-512M}"
+        reservations:
+          cpus: "${LIMIT_CPU_MIMIR:-0.25}"
+          memory: "${LIMIT_MEM_MIMIR:-256M}"
+    networks:
+      - taller-net
+
+  # ─── OTel Collector ──────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:${IMAGE_TAG_OTEL:-latest}
+    container_name: taller-otel-collector
+    restart: unless-stopped
+    volumes:
+      - ./otel-collector/config.yml:/etc/otel/config.yml:ro
     command: ["--config", "/etc/otel/config.yml"]
     ports:
       - "4317:4317"
@@ -29,58 +133,121 @@ services:
         condition: service_started
       tempo:
         condition: service_started
+      mimir:
+        condition: service_started
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_OTEL:-0.3}"
+          memory: "${LIMIT_MEM_OTEL:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_OTEL:-0.1}"
+          memory: "${LIMIT_MEM_OTEL:-128M}"
     networks:
       - taller-net
 
-  loki:
-    image: grafana/loki:latest
-    ports:
-      - "3100:3100"
-    networks:
-      - taller-net
-
-  tempo:
-    image: grafana/tempo:latest
-    command: ["-config.file=/etc/tempo.yml"]
-    volumes:
-      - ./tempo.yml:/etc/tempo.yml
-    ports:
-      - "3200:3200"
-    networks:
-      - taller-net
-
-  postgres-exporter:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
+  # ─── Grafana ──────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:${IMAGE_TAG_GRAFANA:-latest}
+    container_name: taller-grafana
+    restart: unless-stopped
     environment:
-      DATA_SOURCE_NAME: "postgresql://postgres:postgres@postgres:5432/taller?sslmode=disable"
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: ""
     ports:
-      - "9187:9187"
+      - "${HOST_PORT_GRAFANA:-3000}:3000"
+    volumes:
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/dashboards:ro
+    depends_on:
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+      mimir:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_GRAFANA:-0.3}"
+          memory: "${LIMIT_MEM_GRAFANA:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_GRAFANA:-0.1}"
+          memory: "${LIMIT_MEM_GRAFANA:-128M}"
+    networks:
+      - taller-net
+
+  # ─── PostgreSQL Exporter ─────────────────────────────────
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:${IMAGE_TAG_POSTGRES_EXPORTER:-latest}
+    container_name: taller-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-taller}?sslmode=disable"
+    ports:
+      - "${HOST_PORT_PG_EXPORTER:-9187}:9187"
     depends_on:
       postgres:
         condition: service_healthy
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_PG_EXPORTER:-0.1}"
+          memory: "${LIMIT_MEM_PG_EXPORTER:-64M}"
+        reservations:
+          cpus: "${LIMIT_CPU_PG_EXPORTER:-0.05}"
+          memory: "${LIMIT_MEM_PG_EXPORTER:-32M}"
     networks:
       - taller-net
 
+  # ─── cAdvisor ─────────────────────────────────────────────
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:${IMAGE_TAG_CADVISOR:-latest}
+    container_name: taller-cadvisor
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${HOST_PORT_CADVISOR:-8080}:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+    # Necesita --privileged para acceder a cgroups del host
+    # Ver: https://github.com/google/cadvisor/issues/3038
     privileged: true
     devices:
       - /dev/kmsg:/dev/kmsg
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_CADVISOR:-0.2}"
+          memory: "${LIMIT_MEM_CADVISOR:-128M}"
+        reservations:
+          cpus: "${LIMIT_CPU_CADVISOR:-0.1}"
+          memory: "${LIMIT_MEM_CADVISOR:-64M}"
     networks:
       - taller-net
 
+  # ─── Node Exporter ────────────────────────────────────────
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:${IMAGE_TAG_NODE_EXPORTER:-latest}
+    container_name: taller-node-exporter
+    restart: unless-stopped
     ports:
-      - "9100:9100"
+      - "${HOST_PORT_NODE_EXPORTER:-9100}:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -89,44 +256,31 @@ services:
       - "--path.procfs=/host/proc"
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
+      - "--no-collector.wifi"
+      - "--no-collector.hwmon"
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_NODE_EXPORTER:-0.1}"
+          memory: "${LIMIT_MEM_NODE_EXPORTER:-64M}"
+        reservations:
+          cpus: "${LIMIT_CPU_NODE_EXPORTER:-0.05}"
+          memory: "${LIMIT_MEM_NODE_EXPORTER:-32M}"
     networks:
       - taller-net
 
-  mimir:
-    image: grafana/mimir:latest
-    volumes:
-      - ./mimir.yml:/etc/mimir.yml
-      - ./mimir-overrides.yaml:/etc/mimir-overrides.yaml
-      - mimir-data:/data
-    command: ["-config.file=/etc/mimir.yml"]
-    ports:
-      - "9009:9009"
-    networks:
-      - taller-net
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/dashboards
-    depends_on:
-      - loki
-      - tempo
-      - mimir
-    networks:
-      - taller-net
-
+  # ─── App (Frontend + Backend) ─────────────────────────────
   app:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    container_name: taller-app
+    restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "${HOST_PORT_APP:-3001}:3001"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/taller?schema=public
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-taller}?schema=public"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       OTEL_SERVICE_NAME: taller-backend
       NODE_ENV: production
@@ -140,6 +294,15 @@ services:
         npx prisma db push --schema=schema.prisma &&
         node --enable-source-maps packages/infrastructure/dist/index.js
       "
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LIMIT_CPU_APP:-0.5}"
+          memory: "${LIMIT_MEM_APP:-256M}"
+        reservations:
+          cpus: "${LIMIT_CPU_APP:-0.25}"
+          memory: "${LIMIT_MEM_APP:-128M}"
     networks:
       - taller-net
 

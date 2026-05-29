@@ -29,6 +29,9 @@ processors:
     timeout: 1s
     send_batch_size: 1024
 
+extensions:
+  health_check:
+
 exporters:
   otlp_grpc/tempo:
     endpoint: tempo:4317
@@ -42,6 +45,7 @@ exporters:
       X-Scope-OrgID: "anonymous"
 
 service:
+  extensions: [health_check]
   pipelines:
     traces:
       receivers: [otlp]
