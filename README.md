@@ -34,7 +34,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Deberías ver **7 servicios** con estado `Up`:
+Deberías ver **10 servicios** con estado `Up`:
 
 | Servicio | Puerto | Para qué sirve |
 |----------|--------|----------------|
@@ -45,6 +45,37 @@ Deberías ver **7 servicios** con estado `Up`:
 | **Tempo** | 3200 | Almacenamiento de trazas |
 | **Mimir** | 9009 | Almacenamiento de métricas |
 | **Grafana** | [localhost:3000](http://localhost:3000) | Visualización y dashboards |
+| **postgres-exporter** | 9187 | Métricas de PostgreSQL |
+| **cadvisor** | 8080 | Métricas de contenedores |
+| **node-exporter** | 9100 | Métricas del host |
+
+> 💡 **¿No ves los 3 nuevos?** Son los exporters que agregan métricas de PostgreSQL, contenedores y host. Se incorporaron después de la primera versión del taller.
+
+---
+
+## 🚦 Simulación de Carga
+
+Para generar datos reales en los dashboards sin estar creando posts a mano:
+
+```bash
+# 3 usuarios virtuales, delays moderados (default)
+npm run load
+
+# 8 usuarios, más rápido, 20% de requests inválidos (para generar errores 4xx)
+npm run load:heavy
+
+# Configuración personalizada
+npx tsx scripts/load-simulation.ts --users 5 --duration 120 --delay-min 100 --delay-max 1000
+```
+
+El simulador:
+- Usa **60 frases célebres** de Einstein, Cortázar, Mafalda, Dijkstra, Shakespeare y más
+- Crea **20 usuarios virtuales** con User-Agent único cada uno
+- Genera **4 tipos de acción**: crear post, listar, buscar por ID, crear post inválido
+- Reporta **estadísticas cada 30s**: requests/s, tasa de éxito, errores
+- Tira **~10 requests/s** con 8 usuarios — suficiente para ver datos en tiempo real
+
+> 📄 Referencia completa: [`docs/scripts.md`](docs/scripts.md)
 
 ---
 
@@ -220,12 +251,12 @@ Todas las notas están en el repositorio, en `notas-academicas/`:
 ```
 taller-observabilidad-grafana/
 ├── docker/                          ← 🐳 Infraestructura (todo con 1 comando)
-│   ├── docker-compose.yml           ← 7 servicios
+│   ├── docker-compose.yml           ← 10 servicios
 │   ├── Dockerfile                   ← Build multistage
 │   ├── otel-collector/config.yml    ← Pipeline de telemetría
 │   └── grafana/
 │       ├── datasources.yml          ← Provisioning automático
-│       └── dashboards/*.json        ← 3 dashboards pre-configurados
+│       └── dashboards/*.json        ← 5 dashboards pre-configurados
 ├── packages/
 │   ├── core/                        ← 🧠 Dominio puro (sin dependencias)
 │   │   └── src/
@@ -242,7 +273,12 @@ taller-observabilidad-grafana/
 │           └── api/                 ← Cliente HTTP
 ├── docs/
 │   ├── presentacion.md              ← 📽️ Slides MARP para la clase
-│   └── architecture.md              ← Decisiones arquitectónicas
+│   ├── architecture.md              ← Decisiones arquitectónicas
+│   ├── lecciones-aprendidas.md      ← 🐛 9 errores del pipeline y cómo se solucionaron
+│   ├── conectar-nuevo-datasource.md ← 🔌 Guía didáctica: cómo agregar un datasource paso a paso
+│   ├── demo-clase-datasource-ui.md  ← 🎓 Script de clase: conectar PostgreSQL desde la UI
+│   ├── scripts.md                   ← 🚦 Referencia del simulador de carga
+│   └── presentacion/                ← PDF + HTML de los slides
 ├── notas-academicas/                ← 📚 13 archivos de teoría
 └── public/assets/                   ← Imágenes (Grafana, OTel, Grot)
 ```
@@ -283,6 +319,34 @@ histogram_quantile(0.99, rate(http..._bucket[5m]))             // Latencia p99
 
 ---
 
+## 📊 Dashboards Disponibles
+
+El taller incluye **5 dashboards** pre-configurados que se cargan automáticamente al iniciar Grafana:
+
+| Dashboard | Qué muestra | Datasource |
+|-----------|-------------|------------|
+| **RED - Backend** | Rate, errores, latencia p95/p99 de la API | Mimir (PromQL) |
+| **Logs de la Aplicación** | Logs estructurados del backend con filtros | Loki (LogQL) |
+| **Trazas del Backend** | Trazas y spans del backend con detalles | Tempo (TraceQL) |
+| **Base de Datos - PostgreSQL** | Conexiones activas, transacciones/s, cache hit ratio, tamaño DB, reads/writes, deadlocks | Mimir (PromQL) |
+| **Infraestructura - Host y Contenedores** | CPU/mem/disk del host, CPU/mem/red por container, load average, uptime | Mimir (PromQL) |
+
+Podés editarlos desde la UI gracias a `allowUiUpdates: true` en la configuración de provisioning.
+
+---
+
+## 📚 Documentación Generada
+
+| Archivo | Contenido |
+|---------|-----------|
+| [`docs/lecciones-aprendidas.md`](docs/lecciones-aprendidas.md) | Los 9 errores que encontramos armando el pipeline OTel → Mimir/Loki/Tempo, con causa raíz y solución |
+| [`docs/conectar-nuevo-datasource.md`](docs/conectar-nuevo-datasource.md) | Guía didáctica de 7 pasos para conectar un nuevo datasource, desde el exporter hasta el panel en Grafana |
+| [`docs/demo-clase-datasource-ui.md`](docs/demo-clase-datasource-ui.md) | Script para la demo en clase: conectar PostgreSQL desde la UI, crear dashboard y usar el query builder |
+| [`docs/scripts.md`](docs/scripts.md) | Referencia completa del simulador de carga con todos los flags y ejemplos |
+| [`docs/architecture.md`](docs/architecture.md) | Decisiones arquitectónicas del proyecto (por qué Fastify, Prisma, OTel, etc.) |
+
+---
+
 ## ❓ Preguntas Frecuentes
 
 <details>
@@ -309,7 +373,7 @@ Leé la guía completa en <code>notas-academicas/13-agregar-observabilidad.md</c
 
 <details>
 <summary><strong>¿Cuánta RAM necesita el stack?</strong></summary>
-Aproximadamente 4-6 GB para los 7 servicios. Si tenés poca RAM, podés comentar Mimir (métricas) y usar solo Loki + Tempo.
+Aproximadamente 4-6 GB para los 10 servicios. Si tenés poca RAM, podés comentar Mimir (métricas) y usar solo Loki + Tempo, o reducir los exporters (node-exporter, cadvisor).
 </details>
 
 ---
