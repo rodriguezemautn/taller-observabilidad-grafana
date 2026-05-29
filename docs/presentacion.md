@@ -157,21 +157,30 @@ style: |
 
 <!-- _class: lead -->
 
-# Taller de Observabilidad<br>con <strong>Grafana</strong>
+<div class="grid-2" style="align-items: center;">
+<div>
 
-<div class="divider-center"></div>
+# Taller de<br><strong>Observabilidad</strong>
+
+<div class="divider-center" style="margin: 12px 0;"></div>
 
 ### OpenTelemetry + LGTM Stack + Práctica en Aula
 
-<br>
+<span class="badge" style="font-size: 0.8em; padding: 4px 12px;">⏱ 60 minutos</span>
 
-**⏱ 60 minutos — 20' teoría + 35' laboratorio + 5' cierre**
+<p style="font-size: 0.85em; margin-top: 14px; color: var(--text-muted);">Cátedra de Ingeniería y Calidad de Software — 2026</p>
 
-<br>
+</div>
+<div style="text-align: center;">
 
-Ingeniería y Calidad de Software — 2026
+![width:280](public/assets/grot-smile.webp)
 
-![center width:180](public/assets/grafana-logo.png)
+</div>
+</div>
+
+<div class="divider" style="margin: 12px 0;"></div>
+
+![center width:150](public/assets/grafana-logo.png)
 
 ---
 
@@ -534,6 +543,58 @@ Google SRE define que **todo servicio** debería medir:
 
 ---
 
+## 📝 Correlación de Logs y Trazas
+
+<div class="grid-2">
+<div>
+
+### El Logger Pino con `mixin`
+
+Configuramos Pino para inyectar automáticamente el contexto de OpenTelemetry en cada log:
+
+```typescript
+// observability/logger.ts
+import pino from "pino"
+import { trace, context } from "@opentelemetry/api"
+
+export const logger = pino({
+  transport: { target: "pino-pretty" },
+  level: "info",
+  mixin() {
+    // 1. Obtener span activo en el contexto
+    const span = trace.getSpan(context.active())
+    if (!span) return {}
+    
+    // 2. Extraer IDs de traza y span
+    const ctx = span.spanContext()
+    return {
+      trace_id: ctx.traceId,
+      span_id: ctx.spanId
+    }
+  }
+})
+```
+
+</div>
+<div class="card card-orange">
+
+### ¿Por qué funciona?
+
+- **Mixin dinámico**: se ejecuta en tiempo de logueo, no al iniciar la app.
+- **Context propagation**: captura el span exacto que se está ejecutando en ese hilo.
+- **Correlación automática**: sin que el developer tenga que pasar el `trace_id` como argumento manualmente.
+
+```
+logger.info("Operación exitosa")
+// Genera:
+// { "msg": "Operación exitosa", "trace_id": "abc...", "span_id": "def..." }
+```
+
+</div>
+</div>
+
+---
+
 ## 📝 Buenas Prácticas de Logs
 
 ### Cada log debe tener:
@@ -681,40 +742,34 @@ traceparent: 00-abc123...-def456...-01
 
 ---
 
-## OpenTelemetry: El Problema
+## OpenTelemetry: El Estándar
 
 <div class="grid-2">
-<div class="card card-orange">
+<div>
 
-### Antes de OTel: Vendor Lock-in
+![center width:220](public/assets/opentelemetry.png)
 
-| Proveedor | SDK propio |
-|-----------|------------|
-| Datadog | `dd-trace` |
-| New Relic | `newrelic` |
-| AWS X-Ray | `aws-xray-sdk` |
-| Jaeger | `jaeger-client` |
-| Zipkin | `zipkin-js` |
+### Una sola especificación
 
-**Problema:** cambiar de backend = re-instrumentar toda la app
+**Antes de OTel:** cada proveedor exigía su propio SDK propietario (`dd-trace`, `newrelic`, etc.), generando un fuerte **vendor lock-in**.
+
+**Con OTel:** instrumentás tu código una sola vez usando un estándar abierto y podés exportar los datos a cualquier destino compatible.
 
 </div>
-<div class="card card-green">
+<div class="card card-orange">
 
-### Con OTel: Una vez, cualquier backend
+### La solución de la industria
+
+- **Agnóstico**: neutral frente a proveedores
+- **Unificado**: un solo SDK para trazas, métricas y logs
+- **Comunidad**: el segundo proyecto más activo de la CNCF (luego de Kubernetes)
 
 ```
 ┌──────────┐   ┌──────────┐   ┌──────────┐
 │  App SDK  │──►│ Collector │──►│ Grafana  │
-│ (OTel)    │   │ (pipeline)│   │ Datadog  │
-│           │   │          │   │ NewRelic │
-│           │   │          │   │  Jaeger  │
+│ (OTel)    │   │ (pipeline)│   │  Loki    │
 └──────────┘   └──────────┘   └──────────┘
 ```
-
-✅ Instrumentás **1 vez**
-✅ Enviás a **cualquier** backend
-✅ **Sin vendor lock-in**
 
 </div>
 </div>
@@ -777,21 +832,30 @@ Exporta a 1+ backends
 <div class="grid-2">
 <div>
 
-### Sin tocar tu código, OTel captura:
+### El SDK de OpenTelemetry
 
-| Librería | Qué captura automáticamente |
-|----------|----------------------------|
-| **HTTP** | Cada request entrante/saliente |
-| **Fastify** | Spans por ruta y handler |
-| **Pino** | Logs → registros OTel |
-| **pg** (PostgreSQL) | Cada consulta SQL |
+Configuración en `telemetry.ts` que orquesta los exporters y las auto-instrumentaciones:
 
 ```typescript
-import { getNodeAutoInstrumentations } from
+// observability/telemetry.ts
+import { NodeSDK } from "@opentelemetry/sdk-node"
+import { getNodeAutoInstrumentations } from 
   "@opentelemetry/auto-instrumentations-node"
+import { OTLPTraceExporter } from 
+  "@opentelemetry/exporter-trace-otlp-grpc"
 
-// ¡Activa TODO automáticamente!
-getNodeAutoInstrumentations()
+export function initTelemetry(): void {
+  const sdk = new NodeSDK({
+    resource: new Resource({
+      [SEMRESATTRS_SERVICE_NAME]: "taller-backend",
+    }),
+    traceExporter: new OTLPTraceExporter({ 
+      url: "http://otel-collector:4318/v1/traces" 
+    }),
+    instrumentations: [getNodeAutoInstrumentations()],
+  })
+  sdk.start()
+}
 ```
 
 </div>
@@ -809,7 +873,7 @@ Con OTel (automático):
 ```
 
 <div class="card card-orange" style="margin-top: 12px;">
-<strong>💡</strong> Esto funciona porque OTel hace <strong>monkey-patching</strong> de las librerías al iniciar. No modifica tu código fuente.
+<strong>💡</strong> Esto funciona porque OTel hace <strong>monkey-patching</strong> de las librerías estándar en runtime al iniciar. No modifica tus archivos fuente.
 </div>
 
 </div>
@@ -819,50 +883,66 @@ Con OTel (automático):
 
 ## Instrumentación Manual: Datos de Negocio
 
-<div class="card card-dark">
+<div class="grid-2">
+<div>
 
-### Para agregar contexto semántico a las trazas:
+### El Wrapper `startSpan`
+
+Encapsulamos la complejidad de crear, cerrar y capturar excepciones en un utilitario reutilizable:
 
 ```typescript
-import { startSpan } from "./observability/tracer"
-import { logger } from "./observability/logger"
+// observability/tracer.ts
+import { trace, Span, SpanStatusCode } from "@opentelemetry/api"
 
-app.post("/api/posts", async (req, reply) => {
+export function startSpan<T>(
+  name: string, 
+  fn: (span: Span) => Promise<T>
+): Promise<T> {
+  const tracer = trace.getTracer("backend")
+  return tracer.startActiveSpan(name, async (span) => {
+    try {
+      const result = await fn(span)
+      span.setStatus({ code: SpanStatusCode.OK })
+      return result
+    } catch (err) {
+      span.setStatus({ 
+        code: SpanStatusCode.ERROR, 
+        message: err.message 
+      })
+      throw err
+    } finally {
+      span.end()
+    }
+  })
+}
+```
+
+</div>
+<div>
+
+### Uso en las Rutas
+
+Envolvemos las llamadas del controlador para enriquecer las trazas automáticas con metadata del dominio:
+
+```typescript
+// http/fastify/routes/posts.ts
+app.post("/api/posts", async (request, reply) => {
+  const input = request.body
   return startSpan("crear-post", async (span) => {
-    // Atributos de NEGOCIO (no técnicos)
     span.setAttribute("post.title", input.title)
     span.setAttribute("post.author", input.author)
 
-    logger.info({
-      event: "post.created",
-      postId: post.id,
-      title: input.title
-    })
+    const post = await createPost.execute(input)
+    span.setAttribute("post.id", post.id)
 
+    logger.info({ 
+      event: "post.created", 
+      postId: post.id 
+    }, "Post creado")
     return reply.status(201).send(post)
   })
 })
 ```
-
-</div>
-
-<div class="grid-2" style="margin-top: 8px;">
-<div class="card card-green">
-
-#### ✅ Automático
-
-HTTP, Fastify, DB
-Sin código adicional
-Trazas genéricas
-
-</div>
-<div class="card card-orange">
-
-#### ✍️ Manual
-
-Spans con nombre de negocio
-Atributos del dominio
-Logs con contexto
 
 </div>
 </div>
