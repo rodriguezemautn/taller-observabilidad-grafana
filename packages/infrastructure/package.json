@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prisma:generate": "prisma generate --schema=src/persistence/prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=src/persistence/prisma/schema.prisma"
   },
   "dependencies": {
     "@taller/core": "*",
