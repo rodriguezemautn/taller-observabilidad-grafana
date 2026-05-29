@@ -138,7 +138,7 @@ style: |
     background: #0F172A; color: #E2E8F0;
     border-radius: var(--radius); padding: 14px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68em; line-height: 1.5;
+    font-size: 0.78em; line-height: 1.45;
   }
   .diagram-box .hl { color: var(--primary); font-weight: bold; }
   .diagram-box .dim { color: #64748B; }
@@ -153,6 +153,8 @@ style: |
   }
   .divider-center { width: 50px; height: 3px; background: var(--primary); margin: 14px auto; border-radius: 2px; }
   .text-small { color: var(--text-muted); font-size: 0.78em; }
+  .timeline { display: flex; flex-direction: column; gap: 6px; }
+  .tl-item { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 6px; background: var(--gray-100); font-size: 0.85em; color: var(--text); }
 ---
 
 <!-- _class: lead -->
@@ -204,10 +206,6 @@ Bienvenidos a la clase. Hoy vamos a ver la observabilidad, un concepto crítico 
 <div class="tl-item"><span class="badge">13-17'</span> OTel + LGTM + Pipeline</div>
 <div class="tl-item"><span class="badge">17-20'</span> Arquitectura del taller</div>
 </div>
-<style>
-.timeline { display: flex; flex-direction: column; gap: 6px; }
-.tl-item { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 6px; background: var(--gray-50); font-size: 0.85em; }
-</style>
 </div>
 <div>
 
@@ -522,6 +520,8 @@ Detallen los tres tipos de métricas. Expliquen el framework RED para servicios 
 -->
 ---
 
+<!-- _style: "font-size: 18px; padding: 24px 40px;" -->
+
 ## 📈 4 Señales Doradas (SRE)
 
 <div class="grid-2">
@@ -557,7 +557,7 @@ Google SRE define que **todo servicio** debería medir:
 </div>
 
 
-<div class="cap cap-orange" style="margin-top: 12px;">
+<div class="cap cap-orange">
   <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
   <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
     <strong>Grot dice:</strong> Si tenés que elegir qué medir hoy en tu TP, empezá por la Latencia y la Tasa de Errores. ¡Es el core del RED!
@@ -671,6 +671,8 @@ Expliquen el concepto del mixin en Pino. Esto es crítico: muestra cómo el logg
 -->
 ---
 
+<!-- _style: "font-size: 18px; padding: 24px 40px;" -->
+
 ## 📝 Buenas Prácticas de Logs
 
 ### Cada log debe tener:
@@ -722,7 +724,7 @@ Buscable y agrupable
 </div>
 
 
-<div class="cap cap-orange" style="margin-top: 12px;">
+<div class="cap cap-orange">
   <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
   <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
     <strong>Grot dice:</strong> Un log sin <code>trace_id</code> es como un ticket sin número: no podés seguirle el rastro en el sistema.
@@ -840,6 +842,8 @@ Expliquen el concepto de propagación de contexto. Cómo el traceparent viaja en
 -->
 ---
 
+<!-- _style: "font-size: 18px; padding: 24px 40px;" -->
+
 ## OpenTelemetry: El Estándar
 
 <div class="grid-2">
@@ -873,7 +877,7 @@ Expliquen el concepto de propagación de contexto. Cómo el traceparent viaja en
 </div>
 
 
-<div class="cap cap-orange" style="margin-top: 12px;">
+<div class="cap cap-orange">
   <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
   <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
     <strong>Grot dice:</strong> OpenTelemetry es el estándar de facto de la industria. Lo usás hoy y mañana podés cambiar de Grafana a Datadog sin tocar tu código.
@@ -1315,6 +1319,8 @@ Hagan la transición a la parte práctica. Pidan a los alumnos que abran sus con
 -->
 ---
 
+<!-- _style: "font-size: 17px; padding: 20px 38px;" -->
+
 ## Setup: Prerrequisitos
 
 <div class="grid-2">
@@ -1547,6 +1553,11 @@ Notas docentes:
 Explicar Explore de Grafana. Guíen en la escritura de la primera consulta PromQL (Rate). Expliquen cómo el gráfico reacciona al tráfico generado en el Paso 1.
 -->
 ---
+
+<style scoped>
+.card-dark code { color: var(--text); font-size: 0.78em; }
+.card-dark { padding: 18px 22px; }
+</style>
 
 ## ⏱ 28-30': Consultas con Filtros
 
@@ -1899,6 +1910,8 @@ Guíen en la integración final: agregar el panel de Loki y el de Tempo al dashb
 -->
 ---
 
+<!-- _style: "font-size: 18px; padding: 24px 40px;" -->
+
 ## ⏱ 42-46': Ejercicios 1 y 2
 
 <div class="grid-2">
@@ -1936,7 +1949,7 @@ Guíen en la integración final: agregar el panel de Loki y el de Tempo al dashb
 </div>
 
 
-<div class="cap cap-orange" style="margin-top: 12px;">
+<div class="cap cap-orange">
   <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
   <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
     <strong>Grot dice:</strong> La correlación logs-trazas es magia pura. ¡Hagan click en el trace_id en Loki y vean cómo se abre Tempo al lado!
