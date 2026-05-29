@@ -2,6 +2,7 @@
   "name": "taller-observabilidad-grafana",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Taller de Observabilidad con Grafana - Ing. y Calidad de Software",
   "workspaces": [
     "packages/core",
