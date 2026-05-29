@@ -2,10 +2,17 @@
   "__inputs": [],
   "__requires": [],
   "title": "Logs de la Aplicación",
+  "uid": "logs-backend",
+  "version": 1,
+  "schemaVersion": 40,
   "editable": true,
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "tags": ["taller", "logs", "loki"],
   "panels": [
     {
       "title": "Logs en Vivo",
+      "datasource": { "type": "loki", "uid": "loki" },
       "type": "logs",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
       "targets": [
@@ -16,7 +23,8 @@
       ]
     },
     {
-      "title": "Logs por Evento",
+      "title": "Logs de Creación",
+      "datasource": { "type": "loki", "uid": "loki" },
       "type": "logs",
       "gridPos": { "h": 12, "w": 12, "x": 0, "y": 12 },
       "targets": [
@@ -28,6 +36,7 @@
     },
     {
       "title": "Logs de Error",
+      "datasource": { "type": "loki", "uid": "loki" },
       "type": "logs",
       "gridPos": { "h": 12, "w": 12, "x": 12, "y": 12 },
       "targets": [

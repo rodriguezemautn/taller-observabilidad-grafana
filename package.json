@@ -13,7 +13,9 @@
     "build": "npm run build --workspaces",
     "dev": "npm run dev --workspace=packages/infrastructure",
     "dev:web": "npm run dev --workspace=packages/web-app",
-    "clean": "npm run clean --workspaces"
+    "clean": "npm run clean --workspaces",
+    "load": "tsx scripts/load-simulation.ts",
+    "load:heavy": "tsx scripts/load-simulation.ts --users 8 --delay-min 100 --delay-max 1500 --invalid-rate 0.2"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

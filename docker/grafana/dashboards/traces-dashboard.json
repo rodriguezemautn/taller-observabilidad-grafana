@@ -2,26 +2,41 @@
   "__inputs": [],
   "__requires": [],
   "title": "Trazas del Backend",
+  "uid": "traces-backend",
+  "version": 1,
+  "schemaVersion": 40,
   "editable": true,
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "tags": ["taller", "traces", "tempo"],
   "panels": [
     {
-      "title": "Búsqueda de Trazas",
+      "title": "Explorador de Trazas",
+      "datasource": { "type": "tempo", "uid": "tempo" },
       "type": "traces",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
       "targets": [
         {
-          "query": "{service.name=\"taller-backend\"}",
+          "query": "{resource.service.name=\"taller-backend\"}",
           "queryType": "traceql"
         }
       ]
     },
     {
-      "title": "Duración de Spans",
+      "title": "Detalles de la Traza",
+      "datasource": { "type": "tempo", "uid": "tempo" },
       "type": "table",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto" },
+          "displayMode": "auto"
+        },
+        "overrides": []
+      },
       "targets": [
         {
-          "query": "{service.name=\"taller-backend\"} | span.duration > 100ms",
+          "query": "{resource.service.name=\"taller-backend\"}",
           "queryType": "traceql"
         }
       ]

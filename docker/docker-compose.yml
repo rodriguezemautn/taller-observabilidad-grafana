@@ -51,6 +51,11 @@ services:
 
   mimir:
     image: grafana/mimir:latest
+    volumes:
+      - ./mimir.yml:/etc/mimir.yml
+      - ./mimir-overrides.yaml:/etc/mimir-overrides.yaml
+      - mimir-data:/data
+    command: ["-config.file=/etc/mimir.yml"]
     ports:
       - "9009:9009"
     networks:
@@ -97,6 +102,7 @@ services:
 
 volumes:
   pgdata:
+  mimir-data:
 
 networks:
   taller-net:

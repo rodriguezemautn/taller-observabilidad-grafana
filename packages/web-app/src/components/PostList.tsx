@@ -37,7 +37,7 @@ export function PostList() {
   if (posts.length === 0) {
     return (
       <Center py={12}>
-        <Text color="gray.500">No hay posts todav\u00eda. \u00a1Cre\u00e1 el primero!</Text>
+        <Text color="gray.500">No hay posts todavía. ¡Creá el primero!</Text>
       </Center>
     )
   }

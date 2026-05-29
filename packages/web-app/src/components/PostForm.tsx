@@ -24,7 +24,7 @@ export function PostForm({ onSuccess }: PostFormProps) {
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {}
-    if (!title.trim()) newErrors.title = "El t\u00edtulo es obligatorio"
+    if (!title.trim()) newErrors.title = "El título es obligatorio"
     if (!content.trim()) newErrors.content = "El contenido es obligatorio"
     if (!author.trim()) newErrors.author = "El autor es obligatorio"
     setErrors(newErrors)
@@ -56,8 +56,8 @@ export function PostForm({ onSuccess }: PostFormProps) {
   return (
     <Stack gap={4} maxW="600px">
       <FieldRoot invalid={!!errors.title}>
-        <FieldLabel>T\u00edtulo</FieldLabel>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="T\u00edtulo del post" />
+        <FieldLabel>Título</FieldLabel>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título del post" />
         <FieldErrorText>{errors.title}</FieldErrorText>
       </FieldRoot>
 
