@@ -1,6 +1,6 @@
 import type { PostRepository, PostResponse } from "@taller/core"
 import { Post } from "@taller/core"
-import { getPrismaClient } from "./client"
+import { getPrismaClient } from "./client.js"
 
 export class PrismaPostRepository implements PostRepository {
   private get db() {
