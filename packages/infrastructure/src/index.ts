@@ -1,28 +1,35 @@
+import { initTelemetry, shutdownTelemetry } from "./observability/telemetry"
 import { buildServer } from "./http/fastify/server"
 import { PrismaPostRepository } from "./persistence/prisma/repository"
 import { disconnectPrisma } from "./persistence/prisma/client"
+import { logger } from "./observability/logger"
 
 const PORT = parseInt(process.env.PORT || "3001", 10)
 const HOST = process.env.HOST || "0.0.0.0"
 
 async function main() {
+  // 1. Inicializar OTel (trazas, métricas y logs)
+  initTelemetry()
+
+  // 2. Dependencias
   const postRepository = new PrismaPostRepository()
 
+  // 3. Servidor
   const app = await buildServer({ postRepository })
-
   await app.listen({ port: PORT, host: HOST })
-  app.log.info(`Servidor iniciado en http://${HOST}:${PORT}`)
+  logger.info(`Servidor iniciado en http://${HOST}:${PORT}`)
 }
 
-process.on("SIGINT", async () => {
+// Graceful shutdown
+async function shutdown() {
+  logger.info("Deteniendo servidor...")
   await disconnectPrisma()
+  await shutdownTelemetry()
   process.exit(0)
-})
+}
 
-process.on("SIGTERM", async () => {
-  await disconnectPrisma()
-  process.exit(0)
-})
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 
 main().catch((err) => {
   console.error("Error al iniciar el servidor:", err)
