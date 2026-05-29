@@ -2,9 +2,10 @@ import type { FastifyInstance } from "fastify"
 import { CreatePostUseCaseImpl, ListPostsUseCaseImpl, GetPostUseCaseImpl } from "@taller/core"
 import { ValidationError, NotFoundError } from "@taller/core"
 import type { AppDependencies } from "../server"
-import { startSpan } from "../../observability/tracer"
-import { logger } from "../../observability/logger"
+import { startSpan } from "../../../observability/tracer"
+import { logger } from "../../../observability/logger"
 import { SpanStatusCode } from "@opentelemetry/api"
+import type { Span } from "@opentelemetry/api"
 
 export async function registerPostRoutes(app: FastifyInstance, deps: AppDependencies): Promise<void> {
   const createPost = new CreatePostUseCaseImpl(deps.postRepository)
@@ -14,7 +15,7 @@ export async function registerPostRoutes(app: FastifyInstance, deps: AppDependen
   app.post("/api/posts", async (request, reply) => {
     const input = request.body as { title: string; content: string; author: string }
 
-    return startSpan("crear-post", async (span) => {
+    return startSpan("crear-post", async (span: Span) => {
       span.setAttribute("post.title", input.title)
       span.setAttribute("post.author", input.author)
 
@@ -50,7 +51,7 @@ export async function registerPostRoutes(app: FastifyInstance, deps: AppDependen
   })
 
   app.get<{ Params: { id: string } }>("/api/posts/:id", async (request, reply) => {
-    return startSpan("obtener-post", async (span) => {
+    return startSpan("obtener-post", async (span: Span) => {
       span.setAttribute("post.id", request.params.id)
 
       try {

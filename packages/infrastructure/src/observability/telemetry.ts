@@ -23,10 +23,7 @@ export function initTelemetry(): void {
     instrumentations: [
       getNodeAutoInstrumentations({
         "@opentelemetry/instrumentation-pino": {
-          logKeys: {
-            traceId: "trace_id",
-            spanId: "span_id",
-          },
+          enabled: true,
         },
         "@opentelemetry/instrumentation-fastify": {
           enabled: true,
