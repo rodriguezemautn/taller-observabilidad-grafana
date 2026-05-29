@@ -1,8 +1,8 @@
-import { initTelemetry, shutdownTelemetry } from "./observability/telemetry"
-import { buildServer } from "./http/fastify/server"
-import { PrismaPostRepository } from "./persistence/prisma/repository"
-import { disconnectPrisma } from "./persistence/prisma/client"
-import { logger } from "./observability/logger"
+import { initTelemetry, shutdownTelemetry } from "./observability/telemetry.js"
+import { buildServer } from "./http/fastify/server.js"
+import { PrismaPostRepository } from "./persistence/prisma/repository.js"
+import { disconnectPrisma } from "./persistence/prisma/client.js"
+import { logger } from "./observability/logger.js"
 
 const PORT = parseInt(process.env.PORT || "3001", 10)
 const HOST = process.env.HOST || "0.0.0.0"

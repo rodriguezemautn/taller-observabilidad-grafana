@@ -2,10 +2,10 @@ import Fastify from "fastify"
 import fastifyStatic from "@fastify/static"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { registerCors } from "./plugins/cors"
-import { registerErrorHandler } from "./plugins/error-handler"
+import { registerCors } from "./plugins/cors.js"
+import { registerErrorHandler } from "./plugins/error-handler.js"
 import type { PostRepository } from "@taller/core"
-import { registerPostRoutes } from "./routes/posts"
+import { registerPostRoutes } from "./routes/posts.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
