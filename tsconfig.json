@@ -3,7 +3,6 @@
   "files": [],
   "references": [
     { "path": "packages/core" },
-    { "path": "packages/infrastructure" },
-    { "path": "packages/web-app" }
+    { "path": "packages/infrastructure" }
   ]
 }
