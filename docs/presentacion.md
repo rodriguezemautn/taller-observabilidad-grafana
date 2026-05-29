@@ -27,8 +27,8 @@ style: |
   section {
     background: var(--white);
     color: var(--text);
-    padding: 48px 56px;
-    font-size: 17px;
+    padding: 36px 44px;
+    font-size: 21px;
     line-height: 1.6;
   }
   section.lead {
@@ -173,15 +173,20 @@ style: |
 </div>
 <div style="text-align: center;">
 
-![width:280](public/assets/grot-smile.webp)
+![width:280](../public/assets/grot-smile.webp)
 
 </div>
 </div>
 
 <div class="divider" style="margin: 12px 0;"></div>
 
-![center width:150](public/assets/grafana-logo.png)
+![center width:150](../public/assets/grafana-logo.png)
 
+
+<!--
+Notas docentes:
+Bienvenidos a la clase. Hoy vamos a ver la observabilidad, un concepto crítico de la ingeniería de software que trasciende a las herramientas. Expliquen que al final de la clase van a tener un stack Docker completo corriendo y sabrán cómo aplicarlo a sus TPs.
+-->
 ---
 
 ## Agenda
@@ -228,6 +233,18 @@ style: |
 <strong>🎯 Objetivo:</strong> Aplicar observabilidad a tu TP con Grafana + OpenTelemetry
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> Hoy vamos a ver cómo conectar la teoría de calidad con la práctica real. ¡Preparen sus consolas!
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Presenten la agenda de forma dinámica. Expliquen que el taller se divide estrictamente en dos partes: 20 minutos de teoría para asentar los conceptos y 35 minutos de práctica interactiva donde ellos mismos van a explorar y crear un dashboard.
+-->
 ---
 
 <!-- _class: section-title -->
@@ -237,6 +254,11 @@ style: |
 <div class="divider-center"></div>
 Conceptos fundamentales de observabilidad
 
+
+<!--
+Notas docentes:
+Hagan la transición a la parte teórica. Expliquen que antes de tocar Grafana o Docker, necesitamos entender qué estamos observando y por qué la industria se está moviendo hacia acá.
+-->
 ---
 
 ## ¿Qué es Observabilidad?
@@ -272,6 +294,11 @@ Sin observabilidad → **caja negra**
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen la definición teórica. Usen la analogía del capó del auto: el monitoreo tradicional es mirar el indicador de temperatura (salida); la observabilidad es poder abrir el capó y ver qué manguera tiene presión. Refieran al SWEBOK v4 para darle el marco formal de la materia.
+-->
 ---
 
 ## ¿Por qué importa?
@@ -309,6 +336,11 @@ Sin observabilidad → **caja negra**
 
 </div>
 
+
+<!--
+Notas docentes:
+Conecten con el dolor diario del desarrollador. Pregunten al aula: '¿Quién pasó horas leyendo un archivo de log gigante para encontrar un bug en producción?'. Expliquen cómo la observabilidad reduce el MTTR de horas a minutos.
+-->
 ---
 
 ## Monitoreo vs Observabilidad
@@ -354,6 +386,18 @@ Sin observabilidad → **caja negra**
 
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> El monitoreo te dice <em>qué</em> falló. La observabilidad te permite investigar <em>por qué</em>.
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Hagan hincapié en la diferencia: el monitoreo es para problemas conocidos (known unknowns). La observabilidad es para problemas desconocidos (unknown unknowns). Usen la tabla de comparación para hacerlo visual.
+-->
 ---
 
 ## Los 3 Pilares
@@ -409,6 +453,11 @@ Recorrido de peticiones
 
 </div>
 
+
+<!--
+Notas docentes:
+Presenten las tres señales (Métricas, Logs, Trazas). Expliquen que por separado son útiles, pero la verdadera magia ocurre cuando se correlacionan mediante el trace_id. Sin correlación, son silos de información.
+-->
 ---
 
 ## 📈 Métricas: Tipos
@@ -466,6 +515,11 @@ histogram_quantile(0.95,
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Detallen los tres tipos de métricas. Expliquen el framework RED para servicios y compárenlo con el USE para infraestructura. Muestren las consultas PromQL simples como ejemplo de lo que verán en el laboratorio.
+-->
 ---
 
 ## 📈 4 Señales Doradas (SRE)
@@ -502,6 +556,18 @@ Google SRE define que **todo servicio** debería medir:
 </div>
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> Si tenés que elegir qué medir hoy en tu TP, empezá por la Latencia y la Tasa de Errores. ¡Es el core del RED!
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Mencionen que este es el estándar definido por Google SRE. Expliquen cada una de las 4 señales doradas y cómo se aplican al backend del taller.
+-->
 ---
 
 ## 📝 Logs: Texto vs Estructurados
@@ -541,6 +607,11 @@ Google SRE define que **todo servicio** debería medir:
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen por qué los logs tradicionales en texto plano ya no sirven en sistemas distribuidos. Muestren el JSON structured y cómo permite hacer queries automáticas en Loki.
+-->
 ---
 
 ## 📝 Correlación de Logs y Trazas
@@ -593,6 +664,11 @@ logger.info("Operación exitosa")
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen el concepto del mixin en Pino. Esto es crítico: muestra cómo el logger inyecta automáticamente el trace_id si hay un span activo en el contexto asincrónico. Es transparente para el desarrollador.
+-->
 ---
 
 ## 📝 Buenas Prácticas de Logs
@@ -645,6 +721,18 @@ Buscable y agrupable
 
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> Un log sin <code>trace_id</code> es como un ticket sin número: no podés seguirle el rastro en el sistema.
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Insistan en la regla de oro: cada log debe llevar un event único y descriptivo, el trace_id para correlación, y un nivel de log correcto (info, warn, error).
+-->
 ---
 
 ## 🔍 Trazas: Anatomía
@@ -689,6 +777,11 @@ GET /api/posts — 8ms           ← TRACE
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen qué es un span. Muestren el árbol jerárquico de spans en la diapositiva: cómo un span padre (HTTP) engloba spans hijos (negocio, DB). Detallen los atributos clave.
+-->
 ---
 
 ## 🔍 Trazabilidad Distribuida
@@ -740,6 +833,11 @@ traceparent: 00-abc123...-def456...-01
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen el concepto de propagación de contexto. Cómo el traceparent viaja en las cabeceras HTTP entre el frontend, backend y otros servicios de forma transparente.
+-->
 ---
 
 ## OpenTelemetry: El Estándar
@@ -747,7 +845,7 @@ traceparent: 00-abc123...-def456...-01
 <div class="grid-2">
 <div>
 
-![center width:220](public/assets/opentelemetry.png)
+![center width:220](../public/assets/opentelemetry.png)
 
 ### Una sola especificación
 
@@ -774,6 +872,18 @@ traceparent: 00-abc123...-def456...-01
 </div>
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> OpenTelemetry es el estándar de facto de la industria. Lo usás hoy y mañana podés cambiar de Grafana a Datadog sin tocar tu código.
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Expliquen la revolución que significó OTel: estandarizar la telemetría neutralizando el mercado para evitar el vendor lock-in. Mencionen el fuerte apoyo de la CNCF.
+-->
 ---
 
 ## OpenTelemetry: API + SDK + Collector
@@ -825,6 +935,11 @@ Exporta a 1+ backends
 
 </div>
 
+
+<!--
+Notas docentes:
+Diferencien las 3 partes de OTel: la API (interfaces sin dependencias), el SDK (implementación con buffers y exporters), y el Collector (pipeline externo que distribuye los datos).
+-->
 ---
 
 ## Auto-instrumentación: Sin Código
@@ -879,6 +994,11 @@ Con OTel (automático):
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Muestren cómo funciona la auto-instrumentación. Expliquen el monkey-patching en Node.js de forma simple: OTel intercepta los imports de Fastify y Prisma y envuelve sus métodos automáticamente.
+-->
 ---
 
 ## Instrumentación Manual: Datos de Negocio
@@ -947,6 +1067,11 @@ app.post("/api/posts", async (request, reply) => {
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Muestren nuestro wrapper startSpan. Expliquen que la auto-instrumentación es técnica (HTTP, DB), pero los spans manuales aportan contexto de negocio (ej: 'crear-post').
+-->
 ---
 
 ## Stack LGTM
@@ -988,6 +1113,11 @@ Grafana visualiza datos **donde residan**:
 <strong>✅ Provisioning:</strong> Datasources y dashboards se configuran desde archivos YAML/JSON montados como volúmenes. <strong>Sin clicks manuales.</strong>
 </div>
 
+
+<!--
+Notas docentes:
+Presenten el ecosistema LGTM de Grafana. Expliquen el rol de cada uno (Loki, Tempo, Mimir) y la filosofía 'Big Tent' de Grafana: unificar fuentes de datos sin forzar migraciones.
+-->
 ---
 
 ## Pipeline Completo
@@ -1034,6 +1164,11 @@ Grafana visualiza datos **donde residan**:
 
 </div>
 
+
+<!--
+Notas docentes:
+Dediquen un minuto a repasar el diagrama ASCII del pipeline. Muestren el viaje completo del dato desde que el usuario hace un click en el navegador hasta que impacta en los dashboards.
+-->
 ---
 
 ## Nuestra Arquitectura
@@ -1090,6 +1225,11 @@ Driven Adapter (Prisma)
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Repasen la arquitectura hexagonal del backend. Muestren cómo el Core de dominio puro no tiene dependencias de OTel ni de Prisma, respetando los principios de la materia.
+-->
 ---
 
 ## Lo que Genera la App Automáticamente
@@ -1153,6 +1293,11 @@ POST /api/posts
 
 </div>
 
+
+<!--
+Notas docentes:
+Resuman todo lo que la app ya genera de forma automática. Refuercen la idea de que los alumnos hoy no van a codear la observabilidad, sino a explotar e investigar los datos.
+-->
 ---
 
 <!-- _class: section-title -->
@@ -1163,6 +1308,11 @@ POST /api/posts
 
 Práctica guiada — Stack funcionando con 1 comando
 
+
+<!--
+Notas docentes:
+Hagan la transición a la parte práctica. Pidan a los alumnos que abran sus consolas y preparen el entorno Docker.
+-->
 ---
 
 ## Setup: Prerrequisitos
@@ -1217,6 +1367,11 @@ docker compose ps
 
 </div>
 
+
+<!--
+Notas docentes:
+Guíen a los alumnos para clonar el repositorio y ejecutar docker compose. Expliquen los 7 servicios que se están levantando en paralelo en sus máquinas.
+-->
 ---
 
 ## ⏱ 20-23': Paso 1 — Explorar la App
@@ -1268,6 +1423,18 @@ curl http://localhost:3001/api/posts
 </div>
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> Asegúrense de crear al menos 3 posts con distintos autores para ver cómo Mimir y Loki segmentan los datos.
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Pidan a los alumnos que abran el puerto 3001 y creen posts. Expliquen que esto generará la base de datos de telemetría con la que trabajaremos en Grafana.
+-->
 ---
 
 ## ⏱ 23-25': Paso 2 — Grafana
@@ -1322,6 +1489,11 @@ datasources:
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Guíen al ingreso a Grafana (puerto 3000, admin/admin). Muestren cómo los datasources ya están creados automáticamente gracias al provisioning YAML.
+-->
 ---
 
 ## ⏱ 25-28': Paso 3 — Métricas con Mimir
@@ -1369,6 +1541,11 @@ histogram_quantile(0.95,
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Explicar Explore de Grafana. Guíen en la escritura de la primera consulta PromQL (Rate). Expliquen cómo el gráfico reacciona al tráfico generado en el Paso 1.
+-->
 ---
 
 ## ⏱ 28-30': Consultas con Filtros
@@ -1416,6 +1593,11 @@ rate(http_server_duration_ms_count{
 
 </div>
 
+
+<!--
+Notas docentes:
+Expliquen el uso de llaves {} en PromQL para filtrar métricas por método HTTP, status code o ruta. Esto les permite segmentar y refinar la visibilidad.
+-->
 ---
 
 ## ⏱ 30-33': Paso 4 — Dashboard RED
@@ -1473,6 +1655,11 @@ rate(http_server_duration_ms_count{
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Guíen paso a paso en la creación de su primer Dashboard y la adición de paneles para Rate, Errors y Duration (p95). Expliquen el valor de RED en la operación diaria.
+-->
 ---
 
 ## ⏱ 33-35': Paso 5 — Logs con Loki
@@ -1521,6 +1708,11 @@ Creá un post desde la UI. El log aparece instantáneamente en Loki.
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Pasamos a Logs en Explore con Loki. Guíen en la consulta LogQL. Muestren el log en vivo (Live) mientras se interactúa con la aplicación.
+-->
 ---
 
 ## ⏱ 35-37': Filtrar Logs por Trace ID
@@ -1573,6 +1765,11 @@ Cada log contiene `trace_id`. Usalo para vincular:
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Muestren la potencia de Loki filtrando por trace_id. Expliquen cómo esto conecta el silo de logs con el de trazas de forma instantánea.
+-->
 ---
 
 ## ⏱ 37-39': Paso 6 — Trazas con Tempo
@@ -1629,6 +1826,11 @@ POST /api/posts
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Pasamos a Trazas en Explore con Tempo. Busquen las trazas del backend y muestren la jerarquía completa de spans automáticos y manuales de negocio.
+-->
 ---
 
 ## ⏱ 39-42': Paso 7 — Dashboard Completo
@@ -1690,6 +1892,11 @@ POST /api/posts
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Guíen en la integración final: agregar el panel de Loki y el de Tempo al dashboard RED. Al final, tendrán las 3 señales correlacionadas en una sola pantalla.
+-->
 ---
 
 ## ⏱ 42-46': Ejercicios 1 y 2
@@ -1728,6 +1935,18 @@ POST /api/posts
 </div>
 </div>
 
+
+<div class="cap cap-orange" style="margin-top: 12px;">
+  <img src="../public/assets/grot.svg" style="width: 32px; height: 32px; margin: 0;" />
+  <div class="flex-1" style="font-size: 0.8em; line-height: 1.4;">
+    <strong>Grot dice:</strong> La correlación logs-trazas es magia pura. ¡Hagan click en el trace_id en Loki y vean cómo se abre Tempo al lado!
+  </div>
+</div>
+
+<!--
+Notas docentes:
+Den tiempo para que resuelvan los ejercicios de correlación y error forzado. Caminen por el aula validando que logren vincular el log de Loki con el span de Tempo.
+-->
 ---
 
 ## ⏱ 46-50': Ejercicios 3 y 4
@@ -1766,6 +1985,11 @@ POST /api/posts
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Den tiempo para los ejercicios de cuello de botella y la creación de su dashboard personalizado. Fomenten el debate de diseño sobre qué métricas son útiles.
+-->
 ---
 
 ## ⏱ 50-55': Aplicar a tu TP
@@ -1820,6 +2044,11 @@ initTelemetry()
 <strong>📚 Guía completa:</strong> <code>notas-academicas/13-agregar-observabilidad.md</code> — Checklist + tiempos por stack
 </div>
 
+
+<!--
+Notas docentes:
+Muestren los pasos simplificados para que se lleven este conocimiento a sus trabajos integradores de la materia. Refieran a la nota académica 13.
+-->
 ---
 
 ## Resumen: Conceptos Clave
@@ -1908,6 +2137,11 @@ Dominio puro sin OTel
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Repasen los conceptos clave de la clase: métricas, logs, trazas, OTel, Docker, Grafana. Asegúrense de que se lleven claros los fundamentos.
+-->
 ---
 
 ## Recursos
@@ -1949,6 +2183,11 @@ Dominio puro sin OTel
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Muestren las notas de estudio y bibliografía de referencia para que puedan seguir profundizando en sus casas.
+-->
 ---
 
 ## ⏱ 55-60': Conclusiones
@@ -1983,6 +2222,11 @@ Dominio puro sin OTel
 </div>
 </div>
 
+
+<!--
+Notas docentes:
+Cierren la clase con conclusiones pedagógicas importantes. Resalten que la observabilidad es una capacidad de ingeniería, no una herramienta específica.
+-->
 ---
 
 <!-- _class: lead -->
@@ -2002,10 +2246,16 @@ Dominio puro sin OTel
 
 <br>
 
-![center width:120](public/assets/grot.svg)
+![center width:120](../public/assets/grot.svg)
 
 <br>
 
 **¿Preguntas?**
 
 <span class="text-small">Ingeniería y Calidad de Software — 2026</span>
+
+
+<!--
+Notas docentes:
+Slide final de agradecimiento. Abran espacio para preguntas y respuestas (Q&A).
+-->
