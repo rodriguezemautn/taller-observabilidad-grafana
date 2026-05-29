@@ -1,5 +1,5 @@
-import type { CreatePostInput, PostResponse } from "./types"
-import { ValidationError } from "./errors"
+import type { CreatePostInput, PostResponse } from "./types.js"
+import { ValidationError } from "./errors.js"
 
 export class Post {
   private constructor(

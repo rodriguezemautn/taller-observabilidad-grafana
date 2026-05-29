@@ -1,6 +1,6 @@
-import { Post } from "../../domain/post.entity"
-import type { PostResponse, CreatePostInput } from "../../domain/types"
-import type { PostRepository, CreatePostUseCase } from "../../domain/ports/post.repository"
+import { Post } from "../../domain/post.entity.js"
+import type { PostResponse, CreatePostInput } from "../../domain/types.js"
+import type { PostRepository, CreatePostUseCase } from "../../domain/ports/post.repository.js"
 import { ulid } from "ulid"
 
 export class CreatePostUseCaseImpl implements CreatePostUseCase {

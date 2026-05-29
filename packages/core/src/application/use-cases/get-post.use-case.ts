@@ -1,6 +1,6 @@
-import type { PostResponse } from "../../domain/types"
-import type { PostRepository, GetPostUseCase } from "../../domain/ports/post.repository"
-import { NotFoundError } from "../../domain/errors"
+import type { PostResponse } from "../../domain/types.js"
+import type { PostRepository, GetPostUseCase } from "../../domain/ports/post.repository.js"
+import { NotFoundError } from "../../domain/errors.js"
 
 export class GetPostUseCaseImpl implements GetPostUseCase {
   constructor(private readonly repo: PostRepository) {}
