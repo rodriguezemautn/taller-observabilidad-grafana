@@ -3,13 +3,13 @@ import {
   Button,
   Input,
   Textarea,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
+  FieldRoot,
+  FieldLabel,
+  FieldErrorText,
   Stack,
-  useToast,
 } from "@chakra-ui/react"
 import { createPost } from "../api/posts"
+import { toaster } from "../api/toaster"
 
 interface PostFormProps {
   onSuccess: () => void
@@ -21,11 +21,10 @@ export function PostForm({ onSuccess }: PostFormProps) {
   const [author, setAuthor] = useState("")
   const [errors, setErrors] = useState<{ title?: string; content?: string; author?: string }>({})
   const [submitting, setSubmitting] = useState(false)
-  const toast = useToast()
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {}
-    if (!title.trim()) newErrors.title = "El título es obligatorio"
+    if (!title.trim()) newErrors.title = "El t\u00edtulo es obligatorio"
     if (!content.trim()) newErrors.content = "El contenido es obligatorio"
     if (!author.trim()) newErrors.author = "El autor es obligatorio"
     setErrors(newErrors)
@@ -41,14 +40,13 @@ export function PostForm({ onSuccess }: PostFormProps) {
       setTitle("")
       setContent("")
       setAuthor("")
-      toast({ title: "Post creado", status: "success", duration: 3000 })
+      toaster.create({ title: "Post creado", type: "success" })
       onSuccess()
     } catch (err) {
-      toast({
+      toaster.create({
         title: "Error",
         description: err instanceof Error ? err.message : "Error desconocido",
-        status: "error",
-        duration: 5000,
+        type: "error",
       })
     } finally {
       setSubmitting(false)
@@ -57,28 +55,28 @@ export function PostForm({ onSuccess }: PostFormProps) {
 
   return (
     <Stack gap={4} maxW="600px">
-      <FormControl isInvalid={!!errors.title}>
-        <FormLabel>Título</FormLabel>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título del post" />
-        <FormErrorMessage>{errors.title}</FormErrorMessage>
-      </FormControl>
+      <FieldRoot invalid={!!errors.title}>
+        <FieldLabel>T\u00edtulo</FieldLabel>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="T\u00edtulo del post" />
+        <FieldErrorText>{errors.title}</FieldErrorText>
+      </FieldRoot>
 
-      <FormControl isInvalid={!!errors.content}>
-        <FormLabel>Contenido</FormLabel>
+      <FieldRoot invalid={!!errors.content}>
+        <FieldLabel>Contenido</FieldLabel>
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Contenido del post"
           rows={4}
         />
-        <FormErrorMessage>{errors.content}</FormErrorMessage>
-      </FormControl>
+        <FieldErrorText>{errors.content}</FieldErrorText>
+      </FieldRoot>
 
-      <FormControl isInvalid={!!errors.author}>
-        <FormLabel>Autor</FormLabel>
+      <FieldRoot invalid={!!errors.author}>
+        <FieldLabel>Autor</FieldLabel>
         <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Tu nombre" />
-        <FormErrorMessage>{errors.author}</FormErrorMessage>
-      </FormControl>
+        <FieldErrorText>{errors.author}</FieldErrorText>
+      </FieldRoot>
 
       <Button colorScheme="blue" onClick={handleSubmit} loading={submitting} loadingText="Creando...">
         Crear Post

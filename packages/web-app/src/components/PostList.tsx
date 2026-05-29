@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Card, Heading, Text, Spinner, Center, Stack, Badge } from "@chakra-ui/react"
+import { Card, Heading, Text, Spinner, Center, Stack, Badge, Box } from "@chakra-ui/react"
 import { fetchPosts } from "../api/posts"
 import type { Post } from "../api/types"
 
@@ -14,7 +14,7 @@ export function PostList() {
 
     fetchPosts()
       .then(setPosts)
-      .catch((err) => setError(err.message))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
 
@@ -37,14 +37,14 @@ export function PostList() {
   if (posts.length === 0) {
     return (
       <Center py={12}>
-        <Text color="gray.500">No hay posts todavía. ¡Creá el primero!</Text>
+        <Text color="gray.500">No hay posts todav\u00eda. \u00a1Cre\u00e1 el primero!</Text>
       </Center>
     )
   }
 
   return (
     <Stack gap={4}>
-      {posts.map((post) => (
+      {posts.map((post: Post) => (
         <Card.Root key={post.id} variant="outline">
           <Card.Body>
             <Stack gap={2}>
@@ -52,12 +52,12 @@ export function PostList() {
                 {post.title}
               </Heading>
               <Text>{post.content}</Text>
-              <Stack direction="row" gap={2} align="center">
-                <Badge colorScheme="blue">{post.author}</Badge>
-                <Text textStyle="sm" color="gray.500">
+              <Box>
+                <Badge colorPalette="blue">{post.author}</Badge>
+                <Text textStyle="sm" color="gray.500" display="inline" ml={2}>
                   {new Date(post.createdAt).toLocaleDateString("es-AR")}
                 </Text>
-              </Stack>
+              </Box>
             </Stack>
           </Card.Body>
         </Card.Root>
