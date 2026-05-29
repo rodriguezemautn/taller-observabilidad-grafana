@@ -1,0 +1,31 @@
+schema: spec-driven
+
+context: |
+  Stack: TypeScript, React (Vite + Chakra UI), Fastify + Prisma (PostgreSQL), Docker
+  Arquitectura: Hexagonal (Puertos y Adaptadores)
+  Testing: No aplica (taller educativo)
+  Estilo: Conventional Commits en español, feature branches
+
+strict_tdd: false
+
+rules:
+  proposal:
+    - Incluir plan de rollback
+    - Identificar módulos afectados
+  specs:
+    - Usar formato Given/When/Then en escenarios
+    - Usar palabras clave RFC 2119: DEBE, DEBERÍA, PUEDE
+  design:
+    - Incluir diagramas de flujo para flujos complejos
+    - Documentar decisiones con fundamento técnico
+  tasks:
+    - Agrupar por fase (infraestructura, implementación, integración)
+    - Usar numeración jerárquica (1.1, 1.2, etc.)
+    - Cada tarea debe ser realizable en una sesión
+  apply:
+    - Seguir patrones existentes del código base
+    - Cargar skills relevantes para el stack del proyecto
+  verify:
+    - Comparar implementación contra cada escenario de las specs
+  archive:
+    - Sincronizar delta specs a specs principales antes de archivar
