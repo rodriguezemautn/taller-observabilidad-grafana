@@ -1,0 +1,231 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "Infraestructura - Host y Contenedores",
+  "uid": "infra-host",
+  "version": 1,
+  "schemaVersion": 40,
+  "editable": true,
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "tags": ["taller", "infra", "docker", "host"],
+  "panels": [
+    {
+      "title": "CPU del Host",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "percent" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])) * 100)",
+          "legendFormat": "CPU usado"
+        },
+        {
+          "expr": "avg by (instance)(rate(node_cpu_seconds_total{mode=\"user\"}[$__rate_interval])) * 100",
+          "legendFormat": "user"
+        },
+        {
+          "expr": "avg by (instance)(rate(node_cpu_seconds_total{mode=\"system\"}[$__rate_interval])) * 100",
+          "legendFormat": "system"
+        },
+        {
+          "expr": "avg by (instance)(rate(node_cpu_seconds_total{mode=\"iowait\"}[$__rate_interval])) * 100",
+          "legendFormat": "iowait"
+        }
+      ]
+    },
+    {
+      "title": "Memoria del Host",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes",
+          "legendFormat": "Total"
+        },
+        {
+          "expr": "node_memory_MemFree_bytes",
+          "legendFormat": "Libre"
+        },
+        {
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes",
+          "legendFormat": "Usado (excl. buffers/cache)"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes",
+          "legendFormat": "Disponible"
+        }
+      ]
+    },
+    {
+      "title": "Disco del Host",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"\"}",
+          "legendFormat": "Total"
+        },
+        {
+          "expr": "node_filesystem_free_bytes{mountpoint=\"/\",fstype!=\"\"}",
+          "legendFormat": "Libre"
+        },
+        {
+          "expr": "node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"\"} - node_filesystem_free_bytes{mountpoint=\"/\",fstype!=\"\"}",
+          "legendFormat": "Usado"
+        }
+      ]
+    },
+    {
+      "title": "CPU por Contenedor",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": { "unit": "percent" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{name!=\"\"}[$__rate_interval])) by (name) * 100",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "title": "Memoria por Contenedor",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{name!=\"\"}) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "title": "Red por Contenedor (Recibido)",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": { "unit": "Bps" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_network_receive_bytes_total{name!=\"\"}[$__rate_interval])) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "title": "Red por Contenedor (Enviado)",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": { "unit": "Bps" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_network_transmit_bytes_total{name!=\"\"}[$__rate_interval])) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "title": "Carga del Sistema (Load Average)",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "red", "value": 4 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "node_load15",
+          "legendFormat": "Load 15m"
+        }
+      ]
+    },
+    {
+      "title": "Contenedores en Ejecución",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 15 },
+              { "color": "red", "value": 25 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "count(container_last_seen{name!=\"\"})",
+          "legendFormat": "contenedores"
+        }
+      ]
+    },
+    {
+      "title": "Uptime del Host",
+      "datasource": { "type": "prometheus", "uid": "mimir" },
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "none" }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "node_time_seconds - node_boot_time_seconds",
+          "legendFormat": "uptime"
+        }
+      ]
+    }
+  ]
+}
