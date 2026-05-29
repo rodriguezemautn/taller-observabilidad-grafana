@@ -335,6 +335,9 @@ style: |
 ### OpenTelemetry + LGTM Stack + Práctica en Aula
 
 <br>
+
+**⏱ 60 minutos — 20' teoría + 35' laboratorio + 5' cierre**
+
 <br>
 
 Ingeniería y Calidad de Software — 2026
@@ -348,52 +351,53 @@ Ingeniería y Calidad de Software — 2026
 <div class="grid-2">
 <div>
 
-### Parte I — Teoría <span class="text-small">(20 min)</span>
+### ⏱ 0-20' — Teoría
 
-<div class="card card-light" style="padding: 12px 16px;">
+<div class="card card-light" style="padding: 10px 16px; font-size: 0.85em;">
 
-1. ¿Qué es observabilidad?
-2. Monitoreo vs Observabilidad
-3. Los 3 pilares
-4. Métricas, Logs, Trazas
-5. OpenTelemetry
-6. Stack LGTM
-7. Pipeline completo
-8. Arquitectura del taller
+| Min | Tema | Slides |
+|-----|------|--------|
+| 0-2 | ¿Qué es observabilidad? | 3-4 |
+| 2-5 | Monitoreo vs 3 pilares | 5-7 |
+| 5-10 | 📈 Métricas + 📝 Logs | 8-11 |
+| 10-13 | 🔍 Trazas | 12-13 |
+| 13-17 | OTel + LGTM + Pipeline | 14-19 |
+| 17-20 | Arquitectura del taller | 20-21 |
 
 </div>
 </div>
 <div>
 
-### Parte II — Laboratorio <span class="text-small">(35 min)</span>
+### ⏱ 20-60' — Laboratorio
 
-<div class="card card-light" style="padding: 12px 16px;">
+<div class="card card-light" style="padding: 10px 16px; font-size: 0.85em;">
 
-1. Setup con Docker Compose
-2. Explorar la app
-3. Métricas con Mimir
-4. Logs con Loki
-5. Trazas con Tempo
-6. Dashboard completo
-7. Ejercicios
-8. Aplicación al TP
+| Min | Paso | Slides |
+|-----|------|--------|
+| 20-25 | Setup + Grafana | 23-26 |
+| 25-33 | Métricas + Dashboard RED | 27-31 |
+| 33-37 | Logs con Loki | 32-34 |
+| 37-40 | Trazas con Tempo | 35-37 |
+| 40-50 | Ejercicios | 38-41 |
+| 50-55 | Aplicación al TP | 42 |
+| 55-60 | Cierre | 43-44 |
 
 </div>
 </div>
 </div>
 
-<div class="card card-dark text-center" style="margin-top: 8px;">
-<strong>⏱ Objetivo:</strong> Al finalizar, vas a poder aplicar una capa de observabilidad a tu TP integrador usando Grafana + OpenTelemetry.
+<div class="card card-dark text-center" style="margin-top: 4px;">
+<strong>🎯 Objetivo:</strong> Aplicar observabilidad a tu TP con Grafana + OpenTelemetry
 </div>
 
 ---
 
 <!-- _class: section-title -->
 
-# Parte I: Teoría
+# ⏱ 0-20' — Teoría
 
 <div class="divider-center"></div>
-Conceptos fundamentales de observabilidad en ingeniería de software
+Conceptos fundamentales de observabilidad
 
 ---
 
@@ -404,9 +408,11 @@ Conceptos fundamentales de observabilidad en ingeniería de software
 
 ### Definición
 
-El término proviene de la **teoría de control**: un sistema es observable si podés entender su estado interno midiendo sus salidas externas.
+El término proviene de la **teoría de control**: un sistema es observable si podés determinar su **estado interno** midiendo sus **salidas externas**.
 
-> **Observabilidad** es la capacidad de inferir el estado interno de un sistema a partir de sus **señales externas** (telemetría).
+> **Observabilidad** es la capacidad de entender el estado interno de un sistema a partir de sus señales externas (telemetría).
+
+**Pregunta clave:** Si tu app se cae en producción, ¿cuánto tardás en saber por qué?
 
 </div>
 <div>
@@ -414,18 +420,54 @@ El término proviene de la **teoría de control**: un sistema es observable si p
 ### ¿Por qué ahora?
 
 Los sistemas modernos son:
-- **Distribuidos**: microservicios, colas, APIs
-- **Dinámicos**: containers que nacen y mueren
-- **Complejos**: decenas de tecnologías distintas
 
-Sin observabilidad, son **cajas negras**. Sabés que funcionan... hasta que dejan de funcionar.
+| Ayer | Hoy |
+|------|-----|
+| Monolítico | Microservicios |
+| Servidores fijos | Containers dinámicos |
+| Despliegues semanales | Deploys múltiples/día |
+| Equipo pequeño | Equipos distribuidos |
+| "Funciona en mi máquina" | "Funciona en K8s" |
+
+Sin observabilidad → **caja negra**
+
+</div>
+</div>
+
+---
+
+## ¿Por qué importa?
+
+<div class="grid-2">
+<div class="card card-orange">
+
+### Sin observabilidad...
+
+- Error en producción → revisar logs manualmente
+- Usuario reporta lentitud → no sabés por dónde empezar
+- Microservicio falla → no sabés cuál
+- Pico de tráfico → no sabés si es normal
+
+**MTTR (tiempo de reparación)**: horas o días
+
+</div>
+<div class="card card-green">
+
+### Con observabilidad...
+
+- Error en producción → traza con causa raíz en segundos
+- Lentitud → span lento identificado al instante
+- Microservicio falla → dashboard con alerta contextual
+- Pico de tráfico → métricas RED en tiempo real
+
+**MTTR (tiempo de reparación)**: minutos
 
 </div>
 </div>
 
 <div class="card card-dark">
 
-**📚 Según el SWEBOK v4** (Guide to the Software Engineering Body of Knowledge): la observabilidad se integra en el área de **Software Engineering Operations** (KA 06), abarcando monitoreo, telemetría y retroalimentación continua en todas las capas del stack.
+**📚 SWEBOK v4:** La observabilidad se integra en **Software Engineering Operations** (KA 06): telemetría pervasiva en todas las capas del stack (aplicación, SO, servidor) con ciclos de retroalimentación continua.
 
 </div>
 
@@ -441,13 +483,13 @@ Sin observabilidad, son **cajas negras**. Sabés que funcionan... hasta que deja
 "Saber si algo anda mal"
 
 - Definís **qué** medir de antemano
-- Dashboards fijos y estáticos
+- Dashboards fijos
 - Preguntas conocidas: "¿está caído?"
 - Alertas predefinidas
-- **Reactivo**: actuás cuando la alerta suena
+- **Reactivo**
 - Te dice el **síntoma**
 
-Ej: *"El servidor respondió 503"*
+> *"El servidor respondió 503"*
 
 </div>
 <div class="card card-green">
@@ -456,14 +498,14 @@ Ej: *"El servidor respondió 503"*
 
 "Entender por qué anda mal"
 
-- Podés hacer **preguntas nuevas** sin deployar
-- Exploración interactiva de datos
-- Preguntas desconocidas: "¿por qué está lento?"
-- Descubrimiento de patrones
-- **Proactivo**: diagnosticás antes de que escalen
+- Hacés **preguntas nuevas** sin deployar
+- Exploración interactiva
+- Preguntas: "¿por qué está lento?"
+- Descubrís lo inesperado
+- **Proactivo**
 - Te dice la **causa raíz**
 
-Ej: *"El 503 se debe a que la DB está saturada porque una query no usa índice"*
+> *"503 porque la DB está saturada"*
 
 </div>
 </div>
@@ -476,358 +518,570 @@ Ej: *"El 503 se debe a que la DB está saturada porque una query no usa índice"
 
 ---
 
-## Los 3 Pilares de la Observabilidad
+## Los 3 Pilares
 
-<div class="grid-3">
+<div class="grid-3 text-center">
 <div class="pillar-box" style="border-top: 4px solid var(--primary);">
 
-<span class="icon">📈</span>
+<span style="font-size: 2.5em;">📈</span>
 
 ### Métricas
 
-Datos **cuantitativos** agregados en el tiempo
+Datos cuantitativos
 
-**Tipos:**
-- **Counter**: solo incrementa (requests totales)
-- **Gauge**: sube y baja (CPU, RAM)
-- **Histogram**: distribución de valores (latencia)
-
-**Framework RED:**
-Rate, Errors, Duration
+- Counters, Gauges
+- Histograms
+- Framework **RED**
+- Automáticas con OTel
 
 </div>
 <div class="pillar-box" style="border-top: 4px solid var(--secondary);">
 
-<span class="icon">📝</span>
+<span style="font-size: 2.5em;">📝</span>
 
 ### Logs
 
-Eventos **discretos** con timestamp
+Eventos con timestamp
 
-**Estructura ideal:**
-```json
-{
-  "event": "post.created",
-  "postId": "...",
-  "trace_id": "..."
-}
-```
-
-**Clave:** formato JSON
-+ `trace_id` para correlación
+- JSON estructurado
+- Con `trace_id`
+- Filtrables por `event`
+- Niveles: info, warn, error
 
 </div>
 <div class="pillar-box" style="border-top: 4px solid var(--accent);">
 
-<span class="icon">🔍</span>
+<span style="font-size: 2.5em;">🔍</span>
 
 ### Trazas
 
-**Recorrido** de una petición a través del sistema
+Recorrido de peticiones
 
-**Componentes:**
-- **Span**: una operación individual
-- **Trace**: árbol de spans
-- **Contexto**: trace_id, span_id
+- Spans con duración
+- Árbol de llamadas
+- Atributos de negocio
+- Tracing distribuido
 
-**Utilidad:**
-- Identificar cuellos de botella
-- Seguir peticiones entre servicios
+</div>
+</div>
+
+<div class="card card-dark text-center">
+
+**🔗 La correlación entre las 3 señales se logra mediante el trace_id** — mismo ID en métricas, logs y trazas.
+
+</div>
+
+---
+
+## 📈 Métricas: Tipos
+
+<div class="grid-2">
+<div>
+
+| Tipo | Ejemplo | Comportamiento |
+|------|---------|----------------|
+| **Counter** | `http_requests_total` | Solo incrementa |
+| **Gauge** | `memory_usage_bytes` | Sube y baja |
+| **Histogram** | `http_duration_ms` | Distribución |
+
+</div>
+<div class="card card-dark">
+
+```promql
+# Rate: requests/segundo
+rate(http_server_duration_ms_count[5m])
+
+# Latencia percentil 95
+histogram_quantile(0.95,
+  rate(http_duration_bucket[5m]))
+```
 
 </div>
 </div>
 
 <div class="divider"></div>
 
-<div class="card card-dark text-center">
-<strong>🔗 La correlación entre las 3 señales se logra mediante el trace_id:</strong> un identificador único que viaja en CADA métrica, CADA log y CADA traza, permitiendo saltar de una señal a otra en Grafana.
-</div>
-
----
-
-## 📈 Métricas en Profundidad
-
-### Tipos de Métricas
-
-<div class="grid-2">
-<div>
-
-| Tipo | Ejemplo | Pregunta |
-|------|---------|----------|
-| **Counter** | `http_requests_total` | ¿Cuántos requests? |
-| **Gauge** | `memory_usage_bytes` | ¿Cuánta RAM ahora? |
-| **Histogram** | `http_duration_ms` | ¿Cómo se distribuye? |
-
-</div>
-<div>
-
 ### Frameworks de Métricas
 
-**RED** — para servicios (Rate, Errors, Duration)
-
-| Señal | PromQL |
-|-------|--------|
-| Rate | `rate(metric[5m])` |
-| Errors | `rate(metric{status=~"5.."}[5m])` |
-| Duration | `histogram_quantile(0.95, rate(metric_bucket[5m]))` |
-
-**USE** — para infraestructura (Utilization, Saturation, Errors)
-
-</div>
-</div>
-
+<div class="grid-2">
 <div class="card card-orange">
 
-### Las 4 Señales Doradas (SRE — Google)
+#### RED — Para servicios
 
-| Señal | Pregunta | Por qué importa |
-|-------|----------|-----------------|
-| **Latencia** | ¿Cuánto tarda en responder? | Experiencia de usuario |
-| **Tráfico** | ¿Cuántas peticiones por segundo? | Carga del sistema |
-| **Errores** | ¿Cuántos requests fallan? | Salud del servicio |
-| **Saturación** | ¿Qué tan lleno está? | Capacidad restante |
+| Señal | Consulta |
+|-------|----------|
+| **R**ate | `rate(metric[5m])` |
+| **E**rrors | `rate(metric{status=~"5.."}[5m])` |
+| **D**uration | `histogram_quantile(0.95, ...)` |
 
+</div>
+<div class="card card-blue">
+
+#### USE — Para infraestructura
+
+| Señal | Pregunta |
+|-------|----------|
+| **U**tilization | ¿Qué % de CPU/RAM? |
+| **S**aturation | ¿Hay colas de espera? |
+| **E**rrors | ¿Errores de sistema? |
+
+</div>
 </div>
 
 ---
 
-## 📝 Logs en Profundidad
-
-### Logs de Texto Libre vs Estructurados
+## 📈 4 Señales Doradas (SRE)
 
 <div class="grid-2">
-<div class="card card-orange">
+<div class="card card-dark">
 
-#### ❌ Texto libre
+### Las 4 que importan
 
-```
-2024-05-29 12:00:00 Post creado
-2024-05-29 12:00:01 Error al crear
-  post: validation failed
-```
+Google SRE define que **todo servicio** debería medir:
 
-❌ No se puede filtrar por campo
-❌ No hay correlación con trazas
-❌ Difícil de parsear automáticamente
-❌ El mensaje cambia según el developer
+| Señal | Pregunta |
+|-------|----------|
+| **Latencia** | ¿Cuánto tarda en responder? |
+| **Tráfico** | ¿Cuántas peticiones/segundo? |
+| **Errores** | ¿Cuántos requests fallan? |
+| **Saturación** | ¿Qué tan cerca del límite? |
 
 </div>
 <div class="card card-green">
 
-#### ✅ JSON Estructurado
+> *"If you measure 100 metrics, you measure none. Pick the 4 that matter."*
+
+### En nuestro taller:
+
+| Señal | Query Mimir |
+|-------|-------------|
+| Rate | `rate(http...count[5m])` |
+| Errors | `rate(http...{status=~\"4..\"}[5m])` |
+| Duration | `histogram_quantile(0.95, ...)` |
+
+🔴 RED en acción
+
+</div>
+</div>
+
+---
+
+## 📝 Logs: Texto vs Estructurados
+
+<div class="grid-2">
+<div class="card card-orange">
+
+### ❌ Texto libre
+
+```
+2024-05-29 Post creado
+2024-05-29 Error: validation failed
+```
+
+❌ No se puede filtrar por campo
+❌ Sin correlación con trazas
+❌ Difícil de analizar
+
+</div>
+<div class="card card-green">
+
+### ✅ JSON estructurado
 
 ```json
 {
-  "level": 30,
-  "time": 1717000000,
   "event": "post.created",
   "postId": "01HXYZ...",
-  "title": "Mi post",
-  "author": "Alumno",
   "trace_id": "abc123...",
-  "span_id": "def456...",
-  "duration_ms": 42
+  "span_id": "def456..."
 }
 ```
 
-✅ Filtrable por `event`, `author`
+✅ Filtrable por `event`, `postId`
 ✅ Correlacionado con trazas
 ✅ Analizable automáticamente
-✅ Consultas tipo: "todos los errores de creación del alumno X"
 
 </div>
 </div>
 
-<div class="divider"></div>
+---
 
-### Buenas Prácticas
+## 📝 Buenas Prácticas de Logs
+
+### Cada log debe tener:
 
 <div class="grid-3">
 <div class="card card-blue">
 
-**📌 Cada log debe tener un `event` único**
+**📌 Un `event` único**
 
-Ej: `user.created`, `payment.failed`, `auth.login`, `order.shipped`
+`user.created`
+`payment.failed`
+`order.shipped`
+`auth.login`
+
+Buscable y agrupable
 
 </div>
 <div class="card card-blue">
 
-**🔗 Siempre incluir `trace_id`**
+**🔗 El `trace_id` siempre**
 
-Permite saltar del log a la traza en Tempo con 1 click
+```json
+{
+  "event": "post.created",
+  "trace_id": "abc..."
+}
+```
+
+1 click → de log a traza
 
 </div>
 <div class="card card-blue">
 
 **📊 Niveles consistentes**
 
-`info` = operación normal
-`warn` = algo inesperado
-`error` = algo que afecta al usuario
+| Nivel | Significado |
+|-------|-------------|
+| `info` | Operación normal |
+| `warn` | Algo inesperado |
+| `error` | Afecta al usuario |
 
 </div>
+</div>
+
+<div class="card card-dark text-center">
+
+**Regla de oro:** Si un log no tiene `event` y `trace_id`, no es un log estructurado. Es ruido.
+
 </div>
 
 ---
 
-## 🔍 Trazas en Profundidad
-
-### Anatomía de una Traza
+## 🔍 Trazas: Anatomía
 
 <div class="grid-2">
 <div>
 
+### Una traza = árbol de spans
+
 ```
-GET /api/posts — 8ms            ← TRACE
+GET /api/posts — 8ms           ← TRACE
   │
-  ├─ [HTTP] router              ← SPAN (2ms)
-  │   atributos: method, route
+  ├─ [HTTP] router             ← SPAN (2ms)
+  │   method=GET, route=/api/posts
   │
-  ├─ [App] listar-posts          ← SPAN (5ms)
-  │   atributos: posts.count
+  ├─ [App] listar-posts        ← SPAN (5ms)
+  │   posts.count=3
   │   │
-  │   └─ [DB] SELECT *          ← SPAN (1ms)
-  │       atributos: db.system
+  │   └─ [DB] SELECT *         ← SPAN (1ms)
+  │       db.system=postgres
   │
-  └─ [HTTP] response            ← SPAN (1ms)
-      atributos: status_code
+  └─ [HTTP] response           ← SPAN (1ms)
+      status_code=200
 ```
 
 </div>
 <div>
 
-### Componentes
+### Componentes de un Span
 
 | Componente | Descripción |
 |------------|-------------|
-| **Trace ID** | UUID único para toda la petición |
-| **Span ID** | ID de cada operación individual |
-| **Parent Span ID** | ID del span padre (jerarquía) |
-| **Span Name** | Nombre de la operación |
-| **Duration** | Duración en milisegundos |
-| **Attributes** | Metadata contextual |
-| **Status** | OK / ERROR |
-| **Events** | Ocurrencias puntuales (excepciones) |
+| **Trace ID** | UUID único de toda la petición |
+| **Span ID** | ID de cada operación |
+| **Parent ID** | ID del span padre (jerarquía) |
+| **Name** | `crear-post`, `listar-posts` |
+| **Duration** | Tiempo en milisegundos |
+| **Attributes** | `post.id`, `http.method` |
+| **Status** | `OK` / `ERROR` |
+| **Events** | Excepciones, logs internos |
 
 </div>
-</div>
-
-<div class="card card-dark">
-
-**🔗 Trazabilidad Distribuida:** Una traza puede cruzar múltiples servicios. El `trace_id` se propaga via headers HTTP (`traceparent`), permitiendo seguir una petición desde el frontend → backend → DB → cola de mensajes.
-
 </div>
 
 ---
 
-## OpenTelemetry: El Estándar de la Industria
+## 🔍 Trazabilidad Distribuida
+
+<div class="card card-dark">
+
+### El trace_id viaja con la petición
+
+```
+Frontend                         Backend                        DB
+   │                              │                             │
+   │  ─── POST /api/posts ──────► │                             │
+   │                              │                             │
+   │  traceparent: abc123        │  ─── INSERT INTO ──────────► │
+   │                              │  traceparent: abc123        │
+   │                              │                             │
+   │  ◄───── 201 Created ──────── │                             │
+   │                              │                             │
+```
+
+</div>
+
+<div class="grid-2" style="margin-top: 12px;">
+<div class="card card-orange">
+
+### ¿Por qué es importante?
+
+- Seguir una petición **entre servicios**
+- Identificar **cuellos de botella**
+- Reducir **MTTR** (tiempo de reparación)
+- Entender **causa raíz** de fallos
+
+</div>
+<div class="card card-blue">
+
+### ¿Dónde se propaga?
+
+Via headers HTTP estándar:
+
+```
+traceparent: 00-abc123...-def456...-01
+```
+
+- **00**: versión
+- **abc123...**: trace_id
+- **def456...**: span_id
+- **01**: trace flags
+
+</div>
+</div>
+
+---
+
+## OpenTelemetry: El Problema
 
 <div class="grid-2">
-<div>
+<div class="card card-orange">
 
-### ¿Qué problema resuelve?
+### Antes de OTel: Vendor Lock-in
 
-**Antes de OTel:** cada proveedor tenía su propio SDK
-
-| Proveedor | SDK |
-|-----------|-----|
+| Proveedor | SDK propio |
+|-----------|------------|
 | Datadog | `dd-trace` |
 | New Relic | `newrelic` |
 | AWS X-Ray | `aws-xray-sdk` |
 | Jaeger | `jaeger-client` |
+| Zipkin | `zipkin-js` |
 
-**Vendor lock-in:** cambiar de proveedor = re-instrumentar toda la app
+**Problema:** cambiar de backend = re-instrumentar toda la app
 
 </div>
-<div>
+<div class="card card-green">
 
-### La solución OTel
+### Con OTel: Una vez, cualquier backend
 
 ```
-┌────────────┐     ┌──────────────┐     ┌──────────┐
-│  App SDK    │────►│   Collector   │────►│ Grafana  │
-│ (neutral)   │     │  (pipeline)   │     │ Datadog  │
-│             │     │              │     │ NewRelic │
-│             │     │              │     │  Jaeger  │
-└────────────┘     └──────────────┘     └──────────┘
+┌──────────┐   ┌──────────┐   ┌──────────┐
+│  App SDK  │──►│ Collector │──►│ Grafana  │
+│ (OTel)    │   │ (pipeline)│   │ Datadog  │
+│           │   │          │   │ NewRelic │
+│           │   │          │   │  Jaeger  │
+└──────────┘   └──────────┘   └──────────┘
 ```
 
-Instrumentás **una vez** con OTel. Enviás a **cualquier** backend.
+✅ Instrumentás **1 vez**
+✅ Enviás a **cualquier** backend
+✅ **Sin vendor lock-in**
 
 </div>
 </div>
 
-<div class="divider"></div>
+---
+
+## OpenTelemetry: API + SDK + Collector
 
 <div class="grid-3 text-center">
 <div class="card card-orange">
 
-**API**
+### 📡 API
+
 Interfaz estándar
-`Tracer`, `Meter`, `Logger`
+
+`Tracer`
+`Meter`
+`Logger`
+
+Solo definiciones
 Independiente del proveedor
 
 </div>
 <div class="card card-blue">
 
-**SDK**
-Implementación concreta
+### 🧩 SDK
+
+Implementación
+
 Pipeline de datos
-Exporters configurables
+Exporters OTLP
+Auto-instrumentaciones
 
 </div>
 <div class="card card-green">
 
-**Collector**
-Pipeline central
-Recibe, procesa, filtra
-Reenvía a uno o más backends
+### 🔄 Collector
+
+Servidor aparte
+
+Recibe OTLP
+Procesa (filtra, agrega)
+Exporta a 1+ backends
+
+</div>
+</div>
+
+<br>
+
+<div class="card card-dark">
+
+**📡 OTLP** (OpenTelemetry Protocol) es el protocolo estándar para transportar telemetría. Soporta gRPC (4317) y HTTP (4318).
+
+</div>
+
+---
+
+## Auto-instrumentación: Sin Código
+
+<div class="grid-2">
+<div>
+
+### Sin tocar tu código, OTel captura:
+
+| Librería | Qué captura automáticamente |
+|----------|----------------------------|
+| **HTTP** | Cada request entrante/saliente |
+| **Fastify** | Spans por ruta y handler |
+| **Pino** | Logs → registros OTel |
+| **pg** (PostgreSQL) | Cada consulta SQL |
+
+```typescript
+import { getNodeAutoInstrumentations } from
+  "@opentelemetry/auto-instrumentations-node"
+
+// ¡Activa TODO automáticamente!
+getNodeAutoInstrumentations()
+```
+
+</div>
+<div>
+
+### En acción:
+
+```
+Sin OTel:
+  POST /api/posts → ??? → ??? → ??? → 201
+
+Con OTel (automático):
+  POST /api/posts → [HTTP: 1ms] → 
+  [Fastify: 1ms] → [PG: 3ms] → 201
+```
+
+<div class="card card-orange" style="margin-top: 12px;">
+<strong>💡</strong> Esto funciona porque OTel hace <strong>monkey-patching</strong> de las librerías al iniciar. No modifica tu código fuente.
+</div>
 
 </div>
 </div>
 
 ---
 
-## Stack LGTM de Grafana
+## Instrumentación Manual: Datos de Negocio
+
+<div class="card card-dark">
+
+### Para agregar contexto semántico a las trazas:
+
+```typescript
+import { startSpan } from "./observability/tracer"
+import { logger } from "./observability/logger"
+
+app.post("/api/posts", async (req, reply) => {
+  return startSpan("crear-post", async (span) => {
+    // Atributos de NEGOCIO (no técnicos)
+    span.setAttribute("post.title", input.title)
+    span.setAttribute("post.author", input.author)
+
+    logger.info({
+      event: "post.created",
+      postId: post.id,
+      title: input.title
+    })
+
+    return reply.status(201).send(post)
+  })
+})
+```
+
+</div>
+
+<div class="grid-2" style="margin-top: 8px;">
+<div class="card card-green">
+
+#### ✅ Automático
+
+HTTP, Fastify, DB
+Sin código adicional
+Trazas genéricas
+
+</div>
+<div class="card card-orange">
+
+#### ✍️ Manual
+
+Spans con nombre de negocio
+Atributos del dominio
+Logs con contexto
+
+</div>
+</div>
+
+---
+
+## Stack LGTM
 
 <div class="grid-2">
 <div>
 
 | Componente | Señal | Puerto | Función |
 |-----------|-------|--------|---------|
-| **Loki** | Logs | 3100 | Almacena logs con labels (no indexa contenido) |
-| **Grafana** | Visualización | 3000 | Dashboards unificados, 40+ datasources |
-| **Tempo** | Trazas | 3200 | Rastreo distribuido, integración OTel nativa |
-| **Mimir** | Métricas | 9009 | TSDB compatible con Prometheus, alta escala |
+| **Loki** | Logs | 3100 | Almacena logs con labels |
+| **Grafana** | Visualización | 3000 | Dashboards + Explore |
+| **Tempo** | Trazas | 3200 | Rastreo distribuido |
+| **Mimir** | Métricas | 9009 | TSDB Prometheus-compatible |
 
 </div>
 <div>
 
 ### Filosofía "Big Tent"
 
-Grafana no obliga a centralizar los datos. Podés visualizar datos **donde residan**:
+Grafana visualiza datos **donde residan**:
 
 ```
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│ Postgres │  │  Loki    │  │  Tempo   │
-├──────────┤  ├──────────┤  ├──────────┤
-│ Prometheus│ │  Mimir   │  │  MySQL   │
-├──────────┤  ├──────────┤  ├──────────┤
-│  CSV     │  │  Json    │  │  Datadog │
-└──────────┘  └──────────┘  └──────────┘
-         └──────────┬──────────┘
-                    ▼
-              ┌──────────┐
-              │ Grafana  │
-              └──────────┘
+┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐
+│Loki  │ │Tempo │ │Mimir │ │MySQL │
+├──────┤ ├──────┤ ├──────┤ ├──────┤
+│CSV   │ │Json  │ │...   │ │...   │
+└──────┘ └──────┘ └──────┘ └──────┘
+     └──────────┬──────────┘
+                ▼
+          ┌──────────┐
+          │ Grafana  │
+          └──────────┘
 ```
 
 </div>
+</div>
+
+<div class="card card-dark">
+<strong>✅ Provisioning:</strong> Datasources y dashboards se configuran desde archivos YAML/JSON montados como volúmenes. <strong>Sin clicks manuales.</strong>
 </div>
 
 ---
 
-## Pipeline de Datos: App → Grafana
+## Pipeline Completo
 
 <div class="diagram-box">
 
@@ -841,11 +1095,10 @@ Grafana no obliga a centralizar los datos. Podés visualizar datos **donde resid
                     │  └────┬─────┘  └────┬─────┘         │
                     │       │              │               │
                     │  ┌────▼──────────────▼─────┐         │
-                    │  │     startSpan()         │         │
-                    │  │   "crear-post" (manual) │         │
+                    │  │  startSpan("crear-post")│         │
+                    │  │  logger.info({event,    │         │
+                    │  │    trace_id})           │         │
                     │  └────────────┬────────────┘         │
-                    │               │                      │
-                    │  logger.info({event, trace_id})      │
                     └───────────────╪══════════════════════╪┘
                                     │ OTLP HTTP (4318)     │
                                     ▼                      ▼
@@ -860,70 +1113,16 @@ Grafana no obliga a centralizar los datos. Podés visualizar datos **donde resid
               ▼                      ▼                        ▼
       ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
       │    LOKI      │      │    TEMPO     │      │    MIMIR     │
-      │    :3100     │      │    :3200     │      │    :9009     │
       │    logs      │      │   trazas     │      │   métricas   │
       └──────┬───────┘      └──────┬───────┘      └──────┬───────┘
              └──────────┬──────────┴─────────────────────┘
                         ▼
                   ┌──────────────┐
                   │   GRAFANA    │
-                  │    :3000     │
                   │  dashboards  │
                   └──────────────┘
 ```
 
-</div>
-
----
-
-## ¿Cómo se Instrumenta con OTel?
-
-<div class="grid-2">
-<div class="card card-light">
-
-### Auto-instrumentación
-
-**Sin tocar tu código**, OTel captura:
-
-| Librería | Qué captura |
-|----------|-------------|
-| **HTTP** | Cada request entrante/saliente |
-| **Fastify** | Spans por ruta |
-| **Pino** | Logs → registros OTel |
-| **pg** | Consultas PostgreSQL |
-
-```typescript
-// Solo esto activa TODO:
-getNodeAutoInstrumentations()
-```
-
-</div>
-<div class="card card-dark">
-
-### Instrumentación manual
-
-**Para datos de negocio**, agregás spans con contexto:
-
-```typescript
-import { startSpan } from "./tracer"
-
-app.post("/api/posts", async (req, reply) => {
-  return startSpan("crear-post", async (span) => {
-    span.setAttribute("post.title", input.title)
-    span.setAttribute("post.author", input.author)
-    // ↑ atributos de negocio
-
-    logger.info({
-      event: "post.created",
-      postId: post.id
-    })
-
-    return reply.status(201).send(post)
-  })
-})
-```
-
-</div>
 </div>
 
 ---
@@ -937,18 +1136,17 @@ app.post("/api/posts", async (req, reply) => {
 
 ```
 FRONTEND (React 19 + Chakra UI)
-   │ HTTP (con traceparent)
+   │ HTTP (traceparent header)
    ▼
 BACKEND (Fastify + Prisma)
    │
    ├─ Core: dominio puro
-   │   Entidad Post, Casos de Uso
+   │   Post, Casos de Uso
    │   Puertos (interfaces)
    │
    ├─ Infra: adaptadores
    │   PrismaPostRepository
-   │   Rutas HTTP
-   │   OTel + Logger
+   │   OTel + Logger + Routes
    │
    ▼
 PostgreSQL
@@ -959,11 +1157,8 @@ PostgreSQL
 
 ### Principio Hexagonal
 
-> El dominio NO depende de nada externo.
-> Las dependencias apuntan hacia adentro.
-
 ```
-Driving Adapter (HTTP)
+Driving Adapter (HTTP Fastify)
        │
        ▼
     Puerto (CreatePostUseCase)
@@ -981,67 +1176,71 @@ Driven Adapter (Prisma)
     PostgreSQL
 ```
 
-**Cada capa se instrumenta por separado**, dando visibilidad granular.
+**Cada capa se instrumenta por separado**
 
 </div>
 </div>
 
 ---
 
-## Lo que se Genera Automáticamente
+## Lo que Genera la App Automáticamente
 
 <div class="grid-3">
 <div class="card card-orange text-center">
 
-### 📈 Métricas
+<span style="font-size: 2em;">📈</span>
 
-**Cada request genera:**
-- `http_server_duration_ms_count` +1
-- `http_server_duration_ms_bucket`
-- Atributos: method, route, status
+### Métricas
 
-**Cada 5 segundos** se exportan a Mimir
+Cada request:
+- `http...count` +1
+- `http..._bucket`
+
+**Cada 5s** → Mimir
+
+**RED automático** ✨
 
 </div>
 <div class="card card-blue text-center">
 
-### 📝 Logs
+<span style="font-size: 2em;">📝</span>
 
-**Cada logger.info() genera:**
+### Logs
+
+Cada `logger.info()`:
 ```json
 {
   "event": "post.created",
-  "level": 30,
-  "trace_id": "abc...",
-  "span_id": "def..."
+  "trace_id": "abc..."
 }
 ```
 
-**En tiempo real** a Loki via OTel
+**Tiempo real** → Loki
 
 </div>
 <div class="card card-green text-center">
 
-### 🔍 Trazas
+<span style="font-size: 2em;">🔍</span>
 
-**Cada request genera una traza con:**
+### Trazas
 
+Cada request:
 ```
 POST /api/posts
-  ├─ HTTP router
-  ├─ crear-post (manual)
-  │   └─ prisma:post.create
-  └─ response
+  ├─ [HTTP] router
+  ├─ [App] crear-post
+  │   └─ [DB] prisma
+  └─ [HTTP] response
 ```
 
-**Inmediatamente** disponible en Tempo
+**Inmediato** → Tempo
 
 </div>
 </div>
 
 <div class="card card-dark text-center">
 
-**📌 El alumno no escribe NINGUNA línea de observabilidad. La app ya genera todo.** Su tarea es explorar, consultar y crear dashboards.
+**📌 El alumno NO escribe código de observabilidad.** La app ya genera todo: trazas, métricas y logs via OTel. Su tarea es explorar, consultar queries y crear dashboards.
 
 </div>
 
@@ -1049,34 +1248,26 @@ POST /api/posts
 
 <!-- _class: section-title -->
 
-# Parte II: Laboratorio
+# ⏱ 20-55' — Laboratorio
 
 <div class="divider-center"></div>
 
-Práctica guiada — 35 minutos — Stack funcionando con 1 comando
+Práctica guiada — Stack funcionando con 1 comando
 
 ---
 
-## Setup: 1 Comando
+## Setup: Prerrequisitos
 
 <div class="grid-2">
 <div class="card card-orange">
 
-### Prerrequisitos
+### Qué necesitás
 
-<div class="flex" style="align-items: flex-start;">
-<div>
-
-<span class="step">1</span> **Docker 24+**
-<br>Docker Compose v2
-
-<span class="step step-blue">2</span> **Git**
-<br>Clonar el repo
-
-<span class="step step-green">3</span> **Navegador**
-<br>Chrome o Firefox
-
-</div>
+<div style="display: flex; gap: 8px; flex-direction: column;">
+<div><span class="step">1</span> <strong>Docker 24+</strong> con Docker Compose v2</div>
+<div><span class="step step-blue">2</span> <strong>Git</strong></div>
+<div><span class="step step-green">3</span> <strong>Navegador</strong> (Chrome / Firefox)</div>
+<div><span class="step">4</span> <strong>~4-6 GB RAM</strong> libre para el stack</div>
 </div>
 
 </div>
@@ -1103,46 +1294,43 @@ docker compose ps
 
 <div class="card card-light">
 
-### Servicios que se levantan
+### 7 servicios que se levantan
 
-| Servicio | Puerto | Estado esperado |
-|----------|--------|-----------------|
-| App (Backend + Frontend) | 3001 | ✅ Up |
-| PostgreSQL | 5432 | ✅ Healthy |
-| OTel Collector | 4317, 4318 | ✅ Up |
-| Loki | 3100 | ✅ Up |
-| Tempo | 3200 | ✅ Up |
-| Mimir | 9009 | ✅ Up |
-| Grafana | 3000 | ✅ Up |
+| Servicio | Puerto | Para qué |
+|----------|--------|----------|
+| **App** (Frontend + Backend) | 3001 | La app del taller |
+| **PostgreSQL** | 5432 | Base de datos |
+| **OTel Collector** | 4317-4318 | Pipeline de telemetría |
+| **Loki** | 3100 | 📝 Logs |
+| **Tempo** | 3200 | 🔍 Trazas |
+| **Mimir** | 9009 | 📈 Métricas |
+| **Grafana** | 3000 | 📊 Dashboards |
 
 </div>
 
 ---
 
-## Paso 1: Explorar la Aplicación
+## ⏱ 20-23': Paso 1 — Explorar la App
 
 <div class="grid-2">
 <div>
 
-<span class="tag tag-orange">1.1</span> **Abrir la app**
+<span class="tag tag-orange">1.1</span> **Abrrir la app**
 
 ```
 http://localhost:3001
 ```
 
-Lo que ves:
+Vas a ver:
 - **Lista de posts** (vacía al inicio)
-- **Pestaña "Crear Post"** con formulario
-- Diseño con Chakra UI
+- **Pestaña "Crear Post"**
+- UI con Chakra UI
 
 <br>
 
 <span class="tag tag-orange">1.2</span> **Creá 3-4 posts**
 
-Con diferentes:
-- Títulos
-- Contenidos
-- Autores
+Con distintos títulos y autores.
 
 </div>
 <div>
@@ -1153,22 +1341,19 @@ Con diferentes:
 curl http://localhost:3001/api/posts
 ```
 
-Deberías ver algo como:
-
 ```json
 [
   {
     "id": "01KSR...",
     "title": "Mi primer post",
-    "content": "Probando...",
     "author": "Alumno",
     "createdAt": "2026-05-29..."
   }
 ]
 ```
 
-<div class="card card-blue" style="margin-top: 12px;">
-<strong>💡</strong> La app ya está instrumentada con OTel. Mientras creás posts, el backend genera trazas, métricas y logs automáticamente. Ahora vamos a verlos en Grafana.
+<div class="card card-blue" style="margin-top: 8px;">
+💡 La app ya genera métricas, logs y trazas via OTel. Sin que hayas escrito código de observabilidad.
 </div>
 
 </div>
@@ -1176,7 +1361,7 @@ Deberías ver algo como:
 
 ---
 
-## Paso 2: Primer Vistazo a Grafana
+## ⏱ 23-25': Paso 2 — Grafana
 
 <div class="grid-2">
 <div>
@@ -1187,9 +1372,7 @@ Deberías ver algo como:
 http://localhost:3000
 ```
 
-Credenciales: `admin` / `admin`
-
-> Grafana usa **provisioning**: los datasources se configuran automáticamente desde archivos YAML montados como volúmenes. **Sin clicks manuales.**
+Usuario: `admin` / Contraseña: `admin`
 
 <br>
 
@@ -1197,10 +1380,11 @@ Credenciales: `admin` / `admin`
 
 Menú → Connections → Data Sources
 
-Deberías ver:
-- ✅ **Loki** (type: loki)
-- ✅ **Tempo** (type: tempo)
-- ✅ **Mimir** (type: prometheus)
+✅ **Loki** (logs)
+✅ **Tempo** (trazas)
+✅ **Mimir** (métricas)
+
+Ya configurados sin clicks.
 
 </div>
 <div>
@@ -1214,21 +1398,16 @@ datasources:
   - name: Loki
     type: loki
     url: http://loki:3100
-    access: proxy
-
   - name: Tempo
     type: tempo
     url: http://tempo:3200
-    access: proxy
-
   - name: Mimir
     type: prometheus
     url: http://mimir:9009/prometheus
-    access: proxy
 ```
 
 <div class="card card-dark" style="margin-top: 8px;">
-<strong>📁 Los dashboards también se provisioning:</strong> archivos JSON en <code>docker/grafana/dashboards/</code> que se cargan automáticamente al iniciar Grafana.
+📁 Los dashboards también se auto-cargan desde archivos JSON en <code>docker/grafana/dashboards/</code> — 3 dashboards listos para explorar.
 </div>
 
 </div>
@@ -1236,74 +1415,101 @@ datasources:
 
 ---
 
-## Paso 3: Métricas con Mimir
+## ⏱ 25-28': Paso 3 — Métricas con Mimir
 
-<div class="card card-dark">
+<div class="grid-2">
+<div>
 
-### Consultas que vamos a probar
+<span class="tag tag-green">3.1</span> **Explore → Mimir**
 
 ```promql
-# 📊 RATE — Requests por segundo
+# RATE — requests/segundo
 rate(http_server_duration_ms_count[5m])
+```
 
-# ❌ ERRORS — Requests con error 4xx
-rate(http_server_duration_ms_count{http_status_code=~"4.."}[5m])
+Una línea que sube y baja con el tráfico.
 
-# ⏱ DURATION — Latencia percentil 95
+<br>
+
+<span class="tag tag-green">3.2</span> **Generar tráfico**
+
+Creá posts mientras mirás la gráfica. La línea sube.
+
+</div>
+<div>
+
+<span class="tag tag-green">3.3</span> **Errors + Duration**
+
+```promql
+# ERRORS — tasa de error 4xx
+rate(http_server_duration_ms_count{
+  http_status_code=~"4.."
+}[5m])
+```
+
+<div class="card card-orange" style="margin: 8px 0;">
+<strong>💡 Probar:</strong> Creá un post SIN título → error 400 → aparece en Errors
+</div>
+
+```promql
+# DURATION — latencia p95
 histogram_quantile(0.95,
   rate(http_server_duration_ms_bucket[5m]))
 ```
 
 </div>
-
-<div class="grid-2" style="margin-top: 12px;">
-<div>
-
-<span class="tag tag-green">3.1</span> **Ir a Explore**
-
-Menú → Explore → Datasource: **Mimir**
-
-Pegá la query de Rate y ejecutá.
-
-</div>
-<div>
-
-<span class="tag tag-green">3.2</span> **Generar tráfico**
-
-Creá posts desde la UI mientras mirás la gráfica. La línea debería subir.
-
-</div>
 </div>
 
-<div class="grid-2" style="margin-top: 8px;">
-<div class="card card-orange">
+---
 
-### Para ver errores
+## ⏱ 28-30': Consultas con Filtros
 
-1. Creá un post **sin título**
-2. Ejecutá la query de Errors
-3. Deberías ver el error 400
+<div class="grid-2">
+<div class="card card-dark">
 
-</div>
-<div class="card card-blue">
-
-### Consulta con filtros
+### Filtrar por endpoint
 
 ```promql
 # Rate solo para POST
 rate(http_server_duration_ms_count{
   http_request_method="POST"
 }[5m])
+
+# Rate solo para GET
+rate(http_server_duration_ms_count{
+  http_request_method="GET"
+}[5m])
 ```
 
-Agregá filtros con `{}`.
+</div>
+<div class="card card-dark">
+
+### Filtrar por status
+
+```promql
+# Solo status 200 (éxito)
+rate(http_server_duration_ms_count{
+  http_status_code="200"
+}[5m])
+
+# Solo status 400 (error)
+rate(http_server_duration_ms_count{
+  http_status_code="400"
+}[5m])
+```
 
 </div>
+</div>
+
+<div class="card card-blue text-center" style="margin-top: 8px;">
+
+**💡 Los filtros `{}` en PromQL son clave para hacer preguntas específicas.** Sin filtros: todas las métricas juntas. Con filtros: métricas segmentadas por endpoint, método, status, etc.
+
 </div>
 
 ---
 
-## Paso 4: Dashboard RED
+## ⏱ 30-33': Paso 4 — Dashboard RED
 
 <div class="grid-2">
 <div>
@@ -1313,51 +1519,46 @@ Agregá filtros con `{}`.
 1. Menú → Dashboards → **New Dashboard**
 2. **+ Add visualization**
 3. Datasource: **Mimir**
-4. Query: `rate(http_server_duration_ms_count[5m])`
-5. Panel title: `"Rate de Requests"`
+4. Query: `rate(http...count[5m])`
+5. Panel title: "Rate de Requests"
 6. **Apply**
 
 <br>
 
-<span class="tag tag-green">4.2</span> **Agregar panels**
-
-Repetir para Errors y Duration:
+<span class="tag tag-green">4.2</span> **Agregar 2 paneles más**
 
 | Panel | Query |
 |-------|-------|
 | Tasa de Errores | `rate(...{status=~"4.."}[5m])` |
-| Latencia p95 | `histogram_quantile(0.95, rate(..._bucket[5m]))` |
+| Latencia p95 | `histogram_quantile(0.95, ...)` |
 
 </div>
 <div>
 
 <div class="card card-dark">
 
-### Dashboard RED
+### RED Dashboard
 
 ```
 ┌────────────────────────────────────┐
-│ 📊 Panel 1: Rate de Requests       │
+│ 📊 Rate de Requests                │
 │  ────╱╲────╱╲──                    │
-│ ╱    ╲╱    ╲╱    ╲                │
-│ ────────────────────────────────  │
-│ Datasource: Mimir                  │
-│ Query: rate(...[5m])              │
+│ Mimir · rate(...[5m])              │
 ├────────────────────────────────────┤
-│ 📊 Panel 2: Tasa de Errores        │
+│ 📊 Tasa de Errores                 │
 │  ▁▁▁▁▁▁▁╲▁▁▁▁▁▁▁╲▁▁▁              │
-│ Datasource: Mimir                  │
+│ Mimir · rate(...{status=~"4.."})   │
 ├────────────────────────────────────┤
-│ 📊 Panel 3: Latencia p95           │
+│ 📊 Latencia p95                    │
 │  ╱╲    ╱╲    ╱╲                    │
-│ Datasource: Mimir                  │
+│ Mimir · histogram_quantile(0.95)   │
 └────────────────────────────────────┘
 ```
 
 </div>
 
-<div class="card card-orange" style="margin-top: 8px;">
-<strong>🔴 RED</strong> = Rate, Errors, Duration — el framework estándar de SRE para monitorear servicios.
+<div class="card card-orange" style="margin-top: 6px;">
+<strong>🔴 RED</strong> = Rate, Errors, Duration — framework SRE
 </div>
 
 </div>
@@ -1365,20 +1566,19 @@ Repetir para Errors y Duration:
 
 ---
 
-## Paso 5: Logs con Loki
+## ⏱ 33-35': Paso 5 — Logs con Loki
 
 <div class="grid-2">
 <div>
 
-<span class="tag tag-orange">5.1</span> **Explorar logs**
-
-Explore → Datasource: **Loki**
+<span class="tag tag-orange">5.1</span> **Explore → Loki**
 
 ```logql
+# Todos los logs del backend
 {service_name="taller-backend"}
 ```
 
-Todos los logs del backend aparecen en vivo.
+Todos los logs aparecen en vivo.
 
 <br>
 
@@ -1400,28 +1600,78 @@ Creá un post desde la UI. El log aparece instantáneamente en Loki.
 {service_name="taller-backend"}
   |= "error"
 
-# Un evento específico
+# Error de validación
 {service_name="taller-backend"}
   |= "post.validation_error"
-```
 
-<div class="card card-blue" style="margin-top: 8px;">
-<strong>🔗 Correlación:</strong> Cada log contiene <code>trace_id</code>. En la vista de log, hacé click en el trace_id para abrir la traza en Tempo.
-</div>
+# Listado de posts
+{service_name="taller-backend"}
+  |= "post.listed"
+```
 
 </div>
 </div>
 
 ---
 
-## Paso 6: Trazas con Tempo
+## ⏱ 35-37': Filtrar Logs por Trace ID
 
 <div class="grid-2">
 <div>
 
-<span class="tag tag-blue">6.1</span> **Buscar trazas**
+<span class="tag tag-orange">5.4</span> **Correlación logs↔trazas**
 
-Explore → Datasource: **Tempo**
+Cada log contiene `trace_id`. Usalo para vincular:
+
+```logql
+# Buscar logs de una traza específica
+{service_name="taller-backend"}
+  |= "01HXYZ..."  ← trace_id
+```
+
+<br>
+
+### ¿Cómo obtener el trace_id?
+
+1. Andá a Tempo (Explore)
+2. Abrí cualquier traza
+3. Copiá el `trace_id`
+4. Pegalo en Loki
+
+</div>
+<div class="card card-dark">
+
+### Eventos en nuestra app
+
+| Evento | Cuándo ocurre |
+|--------|---------------|
+| `post.created` | Creación exitosa |
+| `post.listed` | Listado de posts |
+| `post.found` | Búsqueda por ID |
+| `post.validation_error` | Error de validación |
+| `post.not_found` | Post inexistente |
+| `post.error` | Error interno |
+
+```json
+{
+  "event": "post.created",
+  "postId": "01KSR...",
+  "trace_id": "abc...",
+  "level": 30
+}
+```
+
+</div>
+</div>
+
+---
+
+## ⏱ 37-39': Paso 6 — Trazas con Tempo
+
+<div class="grid-2">
+<div>
+
+<span class="tag tag-blue">6.1</span> **Explore → Tempo**
 
 ```traceql
 {service.name="taller-backend"}
@@ -1431,16 +1681,15 @@ Explore → Datasource: **Tempo**
 
 <span class="tag tag-blue">6.2</span> **Explorar una traza**
 
-Hacé click en cualquier traza. Vas a ver la estructura completa:
+Click en cualquier traza. Ves la estructura completa:
 
 ```
 POST /api/posts
   ├─ [HTTP] request       ← 2ms
   ├─ [Fastify] handler    ← 1ms
-  ├─ [App] crear-post     ← 5ms  ← span manual
-  │   ├─ atributos: 
-  │   │  post.title="..."
-  │   │  post.author="..."
+  ├─ [App] crear-post     ← 5ms  ← manual
+  │   ├─ post.title="..."
+  │   ├─ post.author="..."
   │   └─ [DB] prisma      ← 1ms
   └─ [HTTP] response      ← 1ms
 ```
@@ -1448,26 +1697,24 @@ POST /api/posts
 </div>
 <div>
 
-<span class="tag tag-blue">6.3</span> **Spans lentos**
-
-Buscá spans que tardan más de 100ms:
+<span class="tag tag-blue">6.3</span> **Consultas útiles**
 
 ```traceql
+# Spans lentos (>100ms)
 {service.name="taller-backend"}
   | span.duration > 100ms
-```
 
-<br>
-
-<span class="tag tag-blue">6.4</span> **Trazas con error**
-
-```traceql
+# Trazas con error
 {service.name="taller-backend"}
   | span.status = error
+
+# Spans de negocio específicos
+{service.name="taller-backend"}
+  && name="crear-post"
 ```
 
 <div class="card card-green" style="margin-top: 8px;">
-<strong>💡</strong> Cada span contiene atributos de negocio: <code>post.title</code>, <code>post.author</code>, <code>post.id</code>. Estos atributos se agregan manualmente con <code>span.setAttribute()</code>.
+💡 Los atributos de negocio (<code>post.title</code>, <code>post.author</code>) se agregan con <code>span.setAttribute()</code> en los spans manuales.
 </div>
 
 </div>
@@ -1475,7 +1722,7 @@ Buscá spans que tardan más de 100ms:
 
 ---
 
-## Paso 7: Dashboard Completo
+## ⏱ 39-42': Paso 7 — Dashboard Completo
 
 <div class="grid-2">
 <div>
@@ -1510,26 +1757,25 @@ Buscá spans que tardan más de 100ms:
 │      📊 RED Dashboard        │
 │  ╱╲    ╱╲    ╱╲              │
 ├──────────────────────────────┤
-│  📊 Rate     📊 Errors       │
-│  ──╱╲──     ▁▁╲▁▁╲           │
+│ 📊 Rate    │ 📊 Errors       │
+│ ──╱╲──    │ ▁▁╲▁▁╲          │
 ├──────────────────────────────┤
-│  📊 Latencia p95             │
-│  ╱╲    ╱╲    ╱╲              │
+│ 📊 Latencia p95              │
+│ ╱╲    ╱╲    ╱╲               │
 ├──────────────────────────────┤
-│  📝 Logs en Vivo             │
-│  post.created ✓             │
-│  post.listed  ✓             │
+│ 📝 Logs en Vivo              │
+│ post.created ✓              │
 ├──────────────────────────────┤
-│  🔍 Últimas Trazas           │
-│  POST /api/posts  42ms      │
-│  GET  /api/posts   8ms      │
+│ 🔍 Últimas Trazas            │
+│ POST /api/posts  42ms       │
+│ GET  /api/posts   8ms       │
 └──────────────────────────────┘
 ```
 
 </div>
 
-<div class="card card-orange" style="margin-top: 8px;">
-<strong>🎯</strong> En un solo dashboard tenés las 3 señales: métricas RED, logs estructurados y trazas distribuidas.
+<div class="card card-orange" style="margin-top: 6px;">
+<strong>🎯 3 señales en 1 dashboard:</strong> métricas RED + logs + trazas
 </div>
 
 </div>
@@ -1537,100 +1783,100 @@ Buscá spans que tardan más de 100ms:
 
 ---
 
-## Ejercicios para el Aula
+## ⏱ 42-46': Ejercicios 1 y 2
 
 <div class="grid-2">
 <div class="card card-orange">
 
 ### 📝 Ejercicio 1: Correlación
 
-**Objetivo:** vincular logs con trazas
+**Vincular logs con trazas**
 
-1. En Tempo, abrí una traza cualquiera
-2. Copiá el `trace_id` del span raíz
-3. Andá a Explore > Loki
-4. Buscá: `{...} |= "<trace_id>"`
-5. **¿Qué ves?** El log exacto que generó esa traza
+1. En Tempo, abrí una traza
+2. Copiá el `trace_id`
+3. En Loki, buscá: `{...} |= "<trace_id>"`
+4. **Respondé:** ¿Qué información adicional tiene el log que no está en la traza?
 
-**🔗 Esto es la correlación logs↔trazas en acción**
+🔗 **Correlación logs↔trazas en acción**
+
+⏱ 2 minutos
 
 </div>
 <div class="card card-blue">
 
 ### 🔬 Ejercicio 2: Error Forzado
 
-**Objetivo:** ver un error en las 3 señales
+**Ver un error en las 3 señales**
 
 1. Creá un post **sin título** desde la UI
-2. **Mimir:** ejecutá la query de errores
+2. **Mimir:** ejecutá la query de errores 4xx
 3. **Loki:** buscá `|= "validation_error"`
-4. **Tempo:** buscá spans con `status = error`
-5. **¿Qué señal te da más información?**
+4. **Tempo:** `| span.status = error`
+5. **Respondé:** ¿Qué señal te da más información para debuggear?
 
-</div>
-</div>
-
-<div class="grid-2" style="margin-top: 12px;">
-<div class="card card-green">
-
-### 🎯 Ejercicio 3: Cuello de Botella
-
-**Objetivo:** identificar lentitud
-
-1. Buscá en Tempo: `{...} | span.duration > 50ms`
-2. ¿Hay spans lentos?
-3. ¿Cuál es el span más lento?
-4. ¿Cómo mejorarías ese tiempo?
-
-**💡 Pensá como un SRE: encontrá el cuello de botella**
-
-</div>
-<div class="card card-dark">
-
-### 🚀 Ejercicio 4: Dashboard Propio
-
-**Objetivo:** crear un dashboard desde cero
-
-1. Creá un nuevo dashboard
-2. Agregá un panel con métrica de tu elección
-3. Agregá un panel de logs filtrado por `post.created`
-4. Agregá un panel de trazas lentas
-5. **Guardalo como "Mi Dashboard"**
-
-**⏱ Tiempo: 5 minutos**
+⏱ 3 minutos
 
 </div>
 </div>
 
 ---
 
-## ¿Cómo Aplicar esto a tu TP?
+## ⏱ 46-50': Ejercicios 3 y 4
+
+<div class="grid-2">
+<div class="card card-green">
+
+### 🎯 Ejercicio 3: Cuello de Botella
+
+**Identificar lentitud en el sistema**
+
+1. Buscá en Tempo: `| span.duration > 50ms`
+2. ¿Hay spans lentos?
+3. ¿Cuál es el span más lento?
+4. **Respondé:** ¿Cómo mejorarías ese tiempo?
+
+💡 Pensá como un SRE
+
+⏱ 2 minutos
+
+</div>
+<div class="card card-dark">
+
+### 🚀 Ejercicio 4: Dashboard Propio
+
+**Crear un dashboard desde cero**
+
+1. Creá un **nuevo** dashboard
+2. Agregá un panel de métrica a elección
+3. Agregá un panel de logs filtrado por `post.created`
+4. Agregá un panel de trazas lentas
+5. **Guardalo como "Mi Dashboard"**
+
+**⏱ 4 minutos — el más completo**
+
+</div>
+</div>
+
+---
+
+## ⏱ 50-55': Aplicar a tu TP
 
 <div class="grid-2">
 <div class="card card-light">
 
 ### Lo que necesitás
 
-<div class="flex" style="align-items: flex-start;">
-<div>
+<span class="step">1</span> **Docker Compose** en tu proyecto
 
-<span class="step">1</span> Docker Compose
+<span class="step step-blue">2</span> **Node.js** / Python / Java
 
-<span class="step step-blue">2</span> Node.js / Python / Java
+<span class="step step-green">3</span> **3-6 horas** de trabajo
 
-<span class="step step-green">3</span> 3-6 horas
+<span class="step">4</span> Agregar **OTel SDK**
 
-</div>
-<div>
+<span class="step step-blue">5</span> Reemplazar **console.log** por logger
 
-<span class="step">4</span> Agregar OTel SDK
-
-<span class="step step-blue">5</span> Reemplazar console.log
-
-<span class="step step-green">6</span> Agregar docker-compose.yml
-
-</div>
-</div>
+<span class="step step-green">6</span> Agregar servicios **LGTM** al compose
 
 </div>
 <div class="card card-dark">
@@ -1638,8 +1884,8 @@ Buscá spans que tardan más de 100ms:
 ### Pasos concretos
 
 ```bash
-# 1. Agregar pipeline al docker-compose
-#    (copiar servicios LGTM del taller)
+# 1. Copiar servicios LGTM del taller
+#    a tu docker-compose.yml
 
 # 2. Instalar OTel
 npm install @opentelemetry/api \
@@ -1647,13 +1893,13 @@ npm install @opentelemetry/api \
   @opentelemetry/auto-instrumentations-node
 
 # 3. Crear telemetry.ts + logger.ts
-#    (copiar del taller)
+#    (copiar de packages/infrastructure/src/observability/)
 
-# 4. Inicializar antes del servidor
+# 4. Inicializar ANTES del servidor
 initTelemetry()
 
 # 5. console.log → logger.info()
-#    (con event y trace_id)
+#    con event + trace_id
 
 # 6. docker compose up
 ```
@@ -1661,10 +1907,8 @@ initTelemetry()
 </div>
 </div>
 
-<div class="card card-orange text-center">
-
-**📚 Ver nota completa:** `notas-academicas/13-agregar-observabilidad.md` — Guía paso a paso con checklist y tiempos estimados.
-
+<div class="card card-orange text-center" style="margin-top: 6px;">
+<strong>📚 Guía completa:</strong> <code>notas-academicas/13-agregar-observabilidad.md</code> — Checklist + tiempos por stack
 </div>
 
 ---
@@ -1672,9 +1916,9 @@ initTelemetry()
 ## Resumen: Conceptos Clave
 
 <div class="grid-4 text-center">
-<div class="card card-orange" style="padding: 16px 8px;">
+<div class="card card-orange" style="padding: 14px 8px;">
 
-<span style="font-size: 2em;">📈</span>
+<span style="font-size: 1.8em;">📈</span>
 
 **Métricas**
 
@@ -1683,20 +1927,20 @@ Rate, Errors, Duration
 Automáticas con OTel
 
 </div>
-<div class="card card-blue" style="padding: 16px 8px;">
+<div class="card card-blue" style="padding: 14px 8px;">
 
-<span style="font-size: 2em;">📝</span>
+<span style="font-size: 1.8em;">📝</span>
 
 **Logs**
 
-Estructurados (JSON)
+JSON estructurados
 Con `event` único
-Con `trace_id` y `span_id`
+Con `trace_id`
 
 </div>
-<div class="card card-green" style="padding: 16px 8px;">
+<div class="card card-green" style="padding: 14px 8px;">
 
-<span style="font-size: 2em;">🔍</span>
+<span style="font-size: 1.8em;">🔍</span>
 
 **Trazas**
 
@@ -1705,15 +1949,15 @@ Atributos de negocio
 Tracing distribuido
 
 </div>
-<div class="card card-dark" style="padding: 16px 8px;">
+<div class="card card-dark" style="padding: 14px 8px;">
 
-<span style="font-size: 2em;">🔗</span>
+<span style="font-size: 1.8em;">🔗</span>
 
 **Correlación**
 
 trace_id en TODAS
 las señales
-Unifica la observabilidad
+→ Dashboard unificado
 
 </div>
 </div>
@@ -1721,15 +1965,15 @@ Unifica la observabilidad
 <div class="divider"></div>
 
 <div class="grid-4 text-center">
-<div class="card card-light" style="padding: 12px;">
+<div class="card card-light" style="padding: 10px;">
 
 **🔶 OpenTelemetry**
 Estándar neutral
-Una instrumentación
+1 instrumentación
 Cualquier backend
 
 </div>
-<div class="card card-light" style="padding: 12px;">
+<div class="card card-light" style="padding: 10px;">
 
 **🐳 Docker**
 7 servicios LGTM
@@ -1737,20 +1981,20 @@ Cualquier backend
 `docker compose up`
 
 </div>
-<div class="card card-light" style="padding: 12px;">
+<div class="card card-light" style="padding: 10px;">
 
 **📊 Grafana**
 Provisioning automático
-Datasources listos
+Sin clicks manuales
 Dashboards pre-cargados
 
 </div>
-<div class="card card-light" style="padding: 12px;">
+<div class="card card-light" style="padding: 10px;">
 
 **🏗️ Hexagonal**
 Capas separadas
 Cada capa instrumentada
-Sin acoplar el dominio
+Dominio puro sin OTel
 
 </div>
 </div>
@@ -1764,7 +2008,7 @@ Sin acoplar el dominio
 
 ### 📚 Notas del Taller
 
-Todas en `notas-academicas/`:
+`notas-academicas/`:
 
 | Archivo | Tema |
 |---------|------|
@@ -1773,7 +2017,6 @@ Todas en `notas-academicas/`:
 | `06-grafana-docker.md` | Grafana + Docker |
 | `13-agregar-observabilidad.md` | 🎯 Guía para aplicar al TP |
 | `05-arquitectura-hexagonal.md` | Puertos y adaptadores |
-| `02-opentelemetry.md` | OTel en profundidad |
 
 </div>
 <div>
@@ -1785,15 +2028,48 @@ Todas en `notas-academicas/`:
 | **Repositorio** | [github.com/rodriguezemautn/taller-observabilidad-grafana](https://github.com/rodriguezemautn/taller-observabilidad-grafana) |
 | **OTel Docs** | opentelemetry.io/docs/ |
 | **Grafana Docs** | grafana.com/docs/ |
-| **Play de Grafana** | play.grafana.org |
-| **SWEBOK v4** | IEEE Computer Society |
+| **Grafana Play** | play.grafana.org |
 
-### 📖 Bibliografía
+### 📖 Libros
 
-- Beyer et al., **"Site Reliability Engineering"** (O'Reilly, 2016)
-- Turnbull, **"The Art of Monitoring"** (2016)
-- Martin, **"Clean Architecture"** (Prentice Hall, 2017)
-- Kim et al., **"The DevOps Handbook"** (IT Revolution, 2021)
+- **SRE Book** — Beyer et al. (O'Reilly)
+- **The Art of Monitoring** — Turnbull
+- **Clean Architecture** — Martin
+- **SWEBOK v4** — IEEE Computer Society
+
+</div>
+</div>
+
+---
+
+## ⏱ 55-60': Conclusiones
+
+<div class="grid-2">
+<div class="card card-light">
+
+### Qué aprendimos hoy
+
+| Concepto | Lo aplicamos en... |
+|----------|-------------------|
+| 📈 Métricas RED | Mimir + PromQL |
+| 📝 Logs estructurados | Loki + LogQL |
+| 🔍 Trazas distribuidas | Tempo + TraceQL |
+| 🔗 Correlación | trace_id en 3 señales |
+| 📊 Dashboards | RED + Logs + Trazas |
+| 🐳 Docker | LGTM en 7 servicios |
+
+</div>
+<div class="card card-dark">
+
+### Para seguir explorando
+
+1. Agregá observabilidad a tu **TP integrador** (guía en nota 13)
+2. Explorá **Grafana Play** (play.grafana.org)
+3. Leé el **SRE Book** de Google
+4. Probá **Pyroscope** (perfilado continuo)
+5. Investigá **Grafana Alloy** (reemplazo de Promtail)
+
+> *"The best time to add observability was yesterday. The second best time is now."*
 
 </div>
 </div>
@@ -1807,21 +2083,20 @@ Todas en `notas-academicas/`:
 <div class="divider-center"></div>
 
 ## La observabilidad no es un producto.
-
 ## Es una **capacidad de ingeniería**.
 
 <br>
-<br>
 
 > *"You can't improve what you can't measure."* — Peter Drucker
->
+
 > *"A monolith that is well-observed is better than 50 microservices that are not."* — Charity Majors
 
-<br>
 <br>
 
 ![center width:120](public/assets/grot.svg)
 
 <br>
+
+**¿Preguntas?**
 
 <span class="text-small">Ingeniería y Calidad de Software — 2026</span>
