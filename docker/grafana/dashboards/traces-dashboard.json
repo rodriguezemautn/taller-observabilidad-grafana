@@ -1,0 +1,30 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "Trazas del Backend",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Búsqueda de Trazas",
+      "type": "traces",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "query": "{service.name=\"taller-backend\"}",
+          "queryType": "traceql"
+        }
+      ]
+    },
+    {
+      "title": "Duración de Spans",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "query": "{service.name=\"taller-backend\"} | span.duration > 100ms",
+          "queryType": "traceql"
+        }
+      ]
+    }
+  ]
+}

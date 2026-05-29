@@ -1,0 +1,41 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "RED - Backend",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Rate de Requests",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_server_duration_ms_count[5m])",
+          "legendFormat": "{{http.method}} {{http.route}}"
+        }
+      ]
+    },
+    {
+      "title": "Tasa de Errores",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_server_duration_ms_count{http.status_code=~\"5..\"}[5m])",
+          "legendFormat": "{{http.method}} {{http.route}}"
+        }
+      ]
+    },
+    {
+      "title": "Latencia (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_server_duration_ms_bucket[5m]))",
+          "legendFormat": "{{http.method}} {{http.route}}"
+        }
+      ]
+    }
+  ]
+}

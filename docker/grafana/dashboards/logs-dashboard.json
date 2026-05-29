@@ -1,0 +1,41 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "Logs de la Aplicación",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Logs en Vivo",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "{service_name=\"taller-backend\"}",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "title": "Logs por Evento",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "{service_name=\"taller-backend\"} |= \"post.created\"",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "title": "Logs de Error",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "{service_name=\"taller-backend\"} |= \"error\"",
+          "legendFormat": ""
+        }
+      ]
+    }
+  ]
+}
