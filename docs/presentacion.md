@@ -1047,7 +1047,7 @@ POST /api/posts
 
 ---
 
-<!-- _class: section-title">
+<!-- _class: section-title -->
 
 # Parte II: Laboratorio
 
@@ -1356,7 +1356,7 @@ Repetir para Errors y Duration:
 
 </div>
 
-<div class="card card-primary" style="margin-top: 8px;">
+<div class="card card-orange" style="margin-top: 8px;">
 <strong>🔴 RED</strong> = Rate, Errors, Duration — el framework estándar de SRE para monitorear servicios.
 </div>
 
@@ -1582,7 +1582,7 @@ Buscá spans que tardan más de 100ms:
 3. ¿Cuál es el span más lento?
 4. ¿Cómo mejorarías ese tiempo?
 
-**💡 Pensá como un SRE: encontrá el瓶颈**
+**💡 Pensá como un SRE: encontrá el cuello de botella**
 
 </div>
 <div class="card card-dark">
@@ -1661,7 +1661,7 @@ initTelemetry()
 </div>
 </div>
 
-<div class="card card-primary text-center">
+<div class="card card-orange text-center">
 
 **📚 Ver nota completa:** `notas-academicas/13-agregar-observabilidad.md` — Guía paso a paso con checklist y tiempos estimados.
 
